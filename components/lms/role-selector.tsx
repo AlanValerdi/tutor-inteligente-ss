@@ -17,10 +17,10 @@ export function RoleSelector({ onSelectRole }: RoleSelectorProps) {
             <GraduationCap className="h-8 w-8 text-primary-foreground" />
           </div>
           <h1 className="mb-2 font-display text-4xl font-bold tracking-tight text-foreground text-balance">
-            Welcome to LearnFlow
+            Bienvenido a LearnFlow
           </h1>
           <p className="text-lg text-muted-foreground text-pretty">
-            An adaptive learning platform that meets you where you are.
+            Una plataforma de aprendizaje adaptativo que se adapta a tu ritmo.
           </p>
         </div>
 
@@ -34,13 +34,13 @@ export function RoleSelector({ onSelectRole }: RoleSelectorProps) {
                 <GraduationCap className="h-7 w-7 text-primary" />
               </div>
               <h2 className="mb-2 font-display text-xl font-semibold text-card-foreground">
-                Student Portal
+                Portal Estudiante
               </h2>
               <p className="mb-6 text-sm text-muted-foreground leading-relaxed">
-                Take your diagnostic assessment, explore courses, and learn at your own pace with adaptive content.
+                Realiza tu evaluacion diagnostica, explora cursos y aprende a tu propio ritmo con contenido adaptativo.
               </p>
               <Button className="gap-2 group-hover:gap-3 transition-all">
-                Enter as Student
+                Entrar como Estudiante
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </CardContent>
@@ -55,13 +55,13 @@ export function RoleSelector({ onSelectRole }: RoleSelectorProps) {
                 <Users className="h-7 w-7 text-accent" />
               </div>
               <h2 className="mb-2 font-display text-xl font-semibold text-card-foreground">
-                Teacher Portal
+                Portal Docente
               </h2>
               <p className="mb-6 text-sm text-muted-foreground leading-relaxed">
-                Manage courses, create topic content, and monitor student performance with detailed analytics.
+                Gestiona cursos, crea contenido por temas y monitorea el rendimiento estudiantil con analitica detallada.
               </p>
               <Button variant="outline" className="gap-2 group-hover:gap-3 border-accent text-accent hover:bg-accent hover:text-accent-foreground transition-all">
-                Enter as Teacher
+                Entrar como Docente
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </CardContent>

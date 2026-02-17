@@ -40,9 +40,9 @@ export function TopicCreator() {
     <div className="flex-1 overflow-auto">
       <div className="px-8 py-8">
         <div className="mb-8">
-          <h1 className="mb-1 font-display text-2xl font-bold text-foreground">Create New Topic</h1>
+          <h1 className="mb-1 font-display text-2xl font-bold text-foreground">Crear Nuevo Tema</h1>
           <p className="text-muted-foreground">
-            Add a new topic to a course with content for each learning profile.
+            Agrega un nuevo tema a un curso con contenido para cada perfil de aprendizaje.
           </p>
         </div>
 
@@ -52,7 +52,7 @@ export function TopicCreator() {
               <CardContent className="flex items-center gap-3 p-4">
                 <CheckCircle2 className="h-5 w-5 text-success" />
                 <p className="text-sm font-medium text-success">
-                  Topic created successfully! It has been added to the course.
+                  Tema creado exitosamente. Se ha agregado al curso.
                 </p>
               </CardContent>
             </Card>
@@ -60,14 +60,14 @@ export function TopicCreator() {
 
           <Card className="border-0 shadow-sm">
             <CardHeader>
-              <CardTitle className="font-display text-lg">Topic Details</CardTitle>
+              <CardTitle className="font-display text-lg">Detalles del Tema</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="course">Course</Label>
+                <Label htmlFor="course">Curso</Label>
                 <Select value={selectedCourse} onValueChange={setSelectedCourse}>
                   <SelectTrigger id="course">
-                    <SelectValue placeholder="Select a course" />
+                    <SelectValue placeholder="Selecciona un curso" />
                   </SelectTrigger>
                   <SelectContent>
                     {courses.map((course) => (
@@ -80,20 +80,20 @@ export function TopicCreator() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="title">Topic Title</Label>
+                <Label htmlFor="title">Titulo del Tema</Label>
                 <Input
                   id="title"
-                  placeholder="e.g., Introduction to Derivatives"
+                  placeholder="Ej: Introduccion a las Derivadas"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Descripcion</Label>
                 <Textarea
                   id="description"
-                  placeholder="Brief description of what this topic covers..."
+                  placeholder="Breve descripcion de lo que cubre este tema..."
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -101,10 +101,10 @@ export function TopicCreator() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="duration">Estimated Duration</Label>
+                <Label htmlFor="duration">Duracion Estimada</Label>
                 <Input
                   id="duration"
-                  placeholder="e.g., 45 min"
+                  placeholder="Ej: 45 min"
                   value={duration}
                   onChange={(e) => setDuration(e.target.value)}
                 />
@@ -114,10 +114,10 @@ export function TopicCreator() {
 
           <Card className="mt-6 border-0 shadow-sm">
             <CardHeader>
-              <CardTitle className="font-display text-lg">Learning Profile Content</CardTitle>
+              <CardTitle className="font-display text-lg">Contenido por Perfil de Aprendizaje</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Upload distinct media for each learning profile. Students will see
-                content matching their detected style.
+                Sube medios distintos para cada perfil de aprendizaje. Los estudiantes veran
+                el contenido que corresponda a su estilo detectado.
               </p>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
@@ -126,20 +126,20 @@ export function TopicCreator() {
                 <div className="flex items-center gap-3 mb-3">
                   <Video className="h-5 w-5 text-accent" />
                   <h3 className="text-sm font-semibold text-card-foreground">
-                    Visual Profile
+                    Perfil Visual
                   </h3>
                 </div>
                 <p className="mb-3 text-xs text-muted-foreground">
-                  Upload video content, diagrams, or infographics for visual learners.
+                  Sube contenido en video, diagramas o infografias para aprendices visuales.
                 </p>
                 <div className="flex items-center gap-3">
                   <Button variant="outline" size="sm" className="gap-2 border-accent/30 text-accent hover:bg-accent/10 hover:text-accent">
                     <Upload className="h-3.5 w-3.5" />
-                    Upload Video
+                    Subir Video
                   </Button>
                   <Button variant="outline" size="sm" className="gap-2 border-accent/30 text-accent hover:bg-accent/10 hover:text-accent">
                     <FileText className="h-3.5 w-3.5" />
-                    Upload PDF
+                    Subir PDF
                   </Button>
                 </div>
               </div>
@@ -149,20 +149,20 @@ export function TopicCreator() {
                 <div className="flex items-center gap-3 mb-3">
                   <Headphones className="h-5 w-5 text-primary" />
                   <h3 className="text-sm font-semibold text-card-foreground">
-                    Auditory Profile
+                    Perfil Auditivo
                   </h3>
                 </div>
                 <p className="mb-3 text-xs text-muted-foreground">
-                  Upload audio lectures, podcasts, or narrated content for auditory learners.
+                  Sube clases en audio, podcasts o contenido narrado para aprendices auditivos.
                 </p>
                 <div className="flex items-center gap-3">
                   <Button variant="outline" size="sm" className="gap-2 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary">
                     <Upload className="h-3.5 w-3.5" />
-                    Upload Audio
+                    Subir Audio
                   </Button>
                   <Button variant="outline" size="sm" className="gap-2 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary">
                     <FileText className="h-3.5 w-3.5" />
-                    Upload Transcript
+                    Subir Transcripcion
                   </Button>
                 </div>
               </div>
@@ -172,20 +172,20 @@ export function TopicCreator() {
                 <div className="flex items-center gap-3 mb-3">
                   <FileText className="h-5 w-5 text-warning" />
                   <h3 className="text-sm font-semibold text-card-foreground">
-                    Kinesthetic Profile
+                    Perfil Kinestesico
                   </h3>
                 </div>
                 <p className="mb-3 text-xs text-muted-foreground">
-                  Upload interactive exercises, worksheets, or hands-on activity guides.
+                  Sube ejercicios interactivos, hojas de trabajo o guias de actividades practicas.
                 </p>
                 <div className="flex items-center gap-3">
                   <Button variant="outline" size="sm" className="gap-2 border-warning/30 text-warning-foreground hover:bg-warning/10 hover:text-warning-foreground">
                     <Upload className="h-3.5 w-3.5" />
-                    Upload Exercise
+                    Subir Ejercicio
                   </Button>
                   <Button variant="outline" size="sm" className="gap-2 border-warning/30 text-warning-foreground hover:bg-warning/10 hover:text-warning-foreground">
                     <FileText className="h-3.5 w-3.5" />
-                    Upload PDF
+                    Subir PDF
                   </Button>
                 </div>
               </div>
@@ -194,31 +194,31 @@ export function TopicCreator() {
 
           <Card className="mt-6 border-0 shadow-sm">
             <CardHeader>
-              <CardTitle className="font-display text-lg">Topic Quiz</CardTitle>
+              <CardTitle className="font-display text-lg">Cuestionario del Tema</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Add quiz questions that all students must pass to proceed.
+                Agrega preguntas de cuestionario que todos los estudiantes deben aprobar para continuar.
               </p>
             </CardHeader>
             <CardContent>
               <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
                 <Plus className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-                <p className="text-sm font-medium text-card-foreground mb-1">Add Quiz Questions</p>
+                <p className="text-sm font-medium text-card-foreground mb-1">Agregar Preguntas</p>
                 <p className="text-xs text-muted-foreground mb-4">
-                  Create multiple-choice questions for this topic.
+                  Crea preguntas de opcion multiple para este tema.
                 </p>
                 <Button variant="outline" size="sm" className="gap-2">
                   <Plus className="h-3.5 w-3.5" />
-                  Add Question
+                  Agregar Pregunta
                 </Button>
               </div>
             </CardContent>
           </Card>
 
           <div className="mt-6 flex justify-end gap-3 pb-8">
-            <Button variant="outline">Save as Draft</Button>
+            <Button variant="outline">Guardar como Borrador</Button>
             <Button className="gap-2" onClick={handleSubmit}>
               <Plus className="h-4 w-4" />
-              Create Topic
+              Crear Tema
             </Button>
           </div>
         </div>

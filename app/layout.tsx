@@ -7,8 +7,8 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' })
 
 export const metadata: Metadata = {
-  title: 'LearnFlow LMS - Adaptive Learning Platform',
-  description: 'A modern adaptive learning management system with personalized study profiles, diagnostic assessments, and real-time student analytics.',
+  title: 'LearnFlow LMS - Plataforma de Aprendizaje Adaptativo',
+  description: 'Un sistema de gestion de aprendizaje adaptativo moderno con perfiles de estudio personalizados, evaluaciones diagnosticas y analitica estudiantil en tiempo real.',
 }
 
 export const viewport: Viewport = {
@@ -21,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>{children}</body>
     </html>
   )

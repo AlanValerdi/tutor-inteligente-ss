@@ -21,7 +21,7 @@ export function CourseView({ course, onBack, onSelectTopic }: CourseViewProps) {
       <div className="px-8 py-8">
         <Button variant="ghost" onClick={onBack} className="mb-6 gap-2 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
+          Volver al Panel
         </Button>
 
         <div className="mb-8">
@@ -30,7 +30,7 @@ export function CourseView({ course, onBack, onSelectTopic }: CourseViewProps) {
           <div className="flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <BookOpen className="h-4 w-4" />
-              {course.topics.length} topics
+              {course.topics.length} temas
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Clock className="h-4 w-4" />
@@ -39,14 +39,13 @@ export function CourseView({ course, onBack, onSelectTopic }: CourseViewProps) {
           </div>
           <div className="mt-4 flex items-center gap-3">
             <Progress value={courseProgress} className="h-2 flex-1 max-w-xs" />
-            <span className="text-sm font-medium text-primary">{courseProgress}% complete</span>
+            <span className="text-sm font-medium text-primary">{courseProgress}% completado</span>
           </div>
         </div>
 
-        <h2 className="mb-6 font-display text-lg font-semibold text-foreground">Course Timeline</h2>
+        <h2 className="mb-6 font-display text-lg font-semibold text-foreground">Linea de Tiempo del Curso</h2>
 
         <div className="relative">
-          {/* Vertical timeline line */}
           <div className="absolute left-6 top-0 h-full w-0.5 bg-border" aria-hidden="true" />
 
           <div className="flex flex-col gap-1">
@@ -57,7 +56,6 @@ export function CourseView({ course, onBack, onSelectTopic }: CourseViewProps) {
 
               return (
                 <div key={topic.id} className="relative flex gap-4">
-                  {/* Timeline node */}
                   <div className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center">
                     {isCompleted ? (
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success">
@@ -74,7 +72,6 @@ export function CourseView({ course, onBack, onSelectTopic }: CourseViewProps) {
                     )}
                   </div>
 
-                  {/* Topic card */}
                   <Card
                     className={`mb-4 flex-1 transition-all ${
                       isLocked
@@ -90,21 +87,21 @@ export function CourseView({ course, onBack, onSelectTopic }: CourseViewProps) {
                         <div className="flex-1">
                           <div className="mb-1 flex items-center gap-2">
                             <span className="text-xs font-medium text-muted-foreground">
-                              Topic {index + 1}
+                              Tema {index + 1}
                             </span>
                             {isCompleted && (
                               <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
-                                Completed
+                                Completado
                               </span>
                             )}
                             {isCurrent && (
                               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                                In Progress
+                                En Progreso
                               </span>
                             )}
                             {isLocked && (
                               <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                                Locked
+                                Bloqueado
                               </span>
                             )}
                           </div>

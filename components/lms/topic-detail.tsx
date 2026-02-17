@@ -57,11 +57,11 @@ export function TopicDetail({ topic, topicIndex, totalTopics, profile, onBack, o
       <div className="mx-auto max-w-3xl px-8 py-8">
         <Button variant="ghost" onClick={onBack} className="mb-6 gap-2 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
-          Back to Course
+          Volver al Curso
         </Button>
 
         <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Topic {topicIndex + 1} of {totalTopics}</span>
+          <span>Tema {topicIndex + 1} de {totalTopics}</span>
           <span className="text-border">|</span>
           <span>{topic.duration}</span>
         </div>
@@ -74,10 +74,10 @@ export function TopicDetail({ topic, topicIndex, totalTopics, profile, onBack, o
           <CardHeader className="bg-primary/5 pb-3">
             <div className="flex items-center gap-2">
               {profile === "Visual" && <Eye className="h-4 w-4 text-primary" />}
-              {profile === "Auditory" && <Ear className="h-4 w-4 text-primary" />}
-              {profile === "Kinesthetic" && <Hand className="h-4 w-4 text-primary" />}
+              {profile === "Auditivo" && <Ear className="h-4 w-4 text-primary" />}
+              {profile === "Kinestesico" && <Hand className="h-4 w-4 text-primary" />}
               <CardTitle className="text-sm font-medium text-primary">
-                Content adapted for {profile} learners
+                Contenido adaptado para aprendices {profile === "Visual" ? "Visuales" : profile === "Auditivo" ? "Auditivos" : "Kinestesicos"}
               </CardTitle>
             </div>
           </CardHeader>
@@ -90,14 +90,14 @@ export function TopicDetail({ topic, topicIndex, totalTopics, profile, onBack, o
                       <Play className="h-8 w-8 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-card-foreground">Video Lesson</p>
+                      <p className="font-medium text-card-foreground">Leccion en Video</p>
                       <p className="text-sm text-muted-foreground">{topic.title}</p>
                     </div>
                   </div>
                 </div>
                 {topic.textContent && (
                   <div className="prose prose-sm max-w-none">
-                    <h3 className="font-display text-base font-semibold text-card-foreground mb-3">Lesson Notes</h3>
+                    <h3 className="font-display text-base font-semibold text-card-foreground mb-3">Notas de la Leccion</h3>
                     {topic.textContent.split("\n\n").map((paragraph, i) => (
                       <p key={i} className="text-sm text-muted-foreground leading-relaxed mb-3">
                         {paragraph}
@@ -108,7 +108,7 @@ export function TopicDetail({ topic, topicIndex, totalTopics, profile, onBack, o
               </div>
             )}
 
-            {profile === "Auditory" && (
+            {profile === "Auditivo" && (
               <div>
                 <div className="mb-6 rounded-xl bg-foreground/5 p-6">
                   <div className="flex items-center gap-4">
@@ -116,7 +116,7 @@ export function TopicDetail({ topic, topicIndex, totalTopics, profile, onBack, o
                       <Headphones className="h-7 w-7 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium text-card-foreground">Audio Lesson</p>
+                      <p className="font-medium text-card-foreground">Leccion en Audio</p>
                       <p className="text-sm text-muted-foreground">{topic.title}</p>
                       <div className="mt-3 h-2 rounded-full bg-border">
                         <div className="h-2 w-1/3 rounded-full bg-primary" />
@@ -130,7 +130,7 @@ export function TopicDetail({ topic, topicIndex, totalTopics, profile, onBack, o
                 </div>
                 {topic.textContent && (
                   <div className="prose prose-sm max-w-none">
-                    <h3 className="font-display text-base font-semibold text-card-foreground mb-3">Transcript</h3>
+                    <h3 className="font-display text-base font-semibold text-card-foreground mb-3">Transcripcion</h3>
                     {topic.textContent.split("\n\n").map((paragraph, i) => (
                       <p key={i} className="text-sm text-muted-foreground leading-relaxed mb-3">
                         {paragraph}
@@ -141,21 +141,21 @@ export function TopicDetail({ topic, topicIndex, totalTopics, profile, onBack, o
               </div>
             )}
 
-            {profile === "Kinesthetic" && (
+            {profile === "Kinestesico" && (
               <div>
                 <div className="mb-6 rounded-xl border-2 border-dashed border-primary/20 bg-primary/5 p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <FileText className="h-5 w-5 text-primary" />
-                    <p className="font-medium text-card-foreground">Interactive Lesson</p>
+                    <p className="font-medium text-card-foreground">Leccion Interactiva</p>
                   </div>
                   <p className="mb-4 text-sm text-muted-foreground leading-relaxed">
-                    This content is designed for hands-on learning. Work through the material below,
-                    then practice with the exercises before taking the quiz.
+                    Este contenido esta disenado para aprendizaje practico. Trabaja con el material
+                    a continuacion, luego practica con los ejercicios antes de tomar el cuestionario.
                   </p>
                 </div>
                 {topic.textContent && (
                   <div className="prose prose-sm max-w-none">
-                    <h3 className="font-display text-base font-semibold text-card-foreground mb-3">Study Material</h3>
+                    <h3 className="font-display text-base font-semibold text-card-foreground mb-3">Material de Estudio</h3>
                     {topic.textContent.split("\n\n").map((paragraph, i) => (
                       <p key={i} className="text-sm text-muted-foreground leading-relaxed mb-3">
                         {paragraph}
@@ -172,11 +172,11 @@ export function TopicDetail({ topic, topicIndex, totalTopics, profile, onBack, o
         <Card className="mb-8 border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-display text-lg">
-              Topic Quiz
+              Cuestionario del Tema
               {quizPassed && <CheckCircle2 className="h-5 w-5 text-success" />}
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Pass this quiz (70% or higher) to unlock the next topic.
+              Aprueba este cuestionario (70% o mas) para desbloquear el siguiente tema.
             </p>
           </CardHeader>
           <CardContent>
@@ -192,7 +192,7 @@ export function TopicDetail({ topic, topicIndex, totalTopics, profile, onBack, o
                 return (
                   <div key={question.id}>
                     <p className="mb-3 text-sm font-semibold text-card-foreground">
-                      <span className="text-muted-foreground">Q{qIndex + 1}. </span>
+                      <span className="text-muted-foreground">P{qIndex + 1}. </span>
                       {question.question}
                     </p>
                     <RadioGroup
@@ -229,11 +229,11 @@ export function TopicDetail({ topic, topicIndex, totalTopics, profile, onBack, o
                       </div>
                     </RadioGroup>
                     {quizSubmitted && isCorrect && (
-                      <p className="mt-2 text-sm text-success font-medium">Correct!</p>
+                      <p className="mt-2 text-sm text-success font-medium">Correcto</p>
                     )}
                     {quizSubmitted && isWrong && (
                       <p className="mt-2 text-sm text-destructive font-medium">
-                        Incorrect. The correct answer is: {question.options[question.correctAnswer]}
+                        Incorrecto. La respuesta correcta es: {question.options[question.correctAnswer]}
                       </p>
                     )}
                   </div>
@@ -244,17 +244,17 @@ export function TopicDetail({ topic, topicIndex, totalTopics, profile, onBack, o
             <div className="mt-8 flex items-center gap-3">
               {!quizSubmitted ? (
                 <Button onClick={handleQuizSubmit} disabled={!allAnswered} className="gap-2">
-                  Submit Quiz
+                  Enviar Cuestionario
                   <CheckCircle2 className="h-4 w-4" />
                 </Button>
               ) : quizPassed ? (
                 <Button onClick={onComplete} className="gap-2">
-                  {topicIndex < totalTopics - 1 ? "Next Topic" : "Complete Course"}
+                  {topicIndex < totalTopics - 1 ? "Siguiente Tema" : "Completar Curso"}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               ) : (
                 <Button onClick={handleRetry} variant="outline" className="gap-2">
-                  Retry Quiz
+                  Reintentar Cuestionario
                 </Button>
               )}
 
@@ -263,8 +263,8 @@ export function TopicDetail({ topic, topicIndex, totalTopics, profile, onBack, o
                   className={`text-sm font-medium ${quizPassed ? "text-success" : "text-destructive"}`}
                 >
                   {quizPassed
-                    ? "You passed! Great work."
-                    : "You need 70% to pass. Try again!"}
+                    ? "Aprobaste. Excelente trabajo."
+                    : "Necesitas 70% para aprobar. Intentalo de nuevo."}
                 </span>
               )}
             </div>

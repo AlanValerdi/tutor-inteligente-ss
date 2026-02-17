@@ -11,6 +11,12 @@ interface DiagnosticWizardProps {
   onComplete: (profile: StudyProfile) => void
 }
 
+const profileDescriptions: Record<StudyProfile, string> = {
+  Visual: "Aprendes mejor a traves de imagenes, diagramas y demostraciones visuales.",
+  Auditivo: "Aprendes mejor escuchando, en discusiones y con explicaciones verbales.",
+  Kinestesico: "Aprendes mejor con practica directa e interaccion fisica.",
+}
+
 export function DiagnosticWizard({ onComplete }: DiagnosticWizardProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [answers, setAnswers] = useState<Record<string, StudyProfile>>({})
@@ -40,7 +46,7 @@ export function DiagnosticWizard({ onComplete }: DiagnosticWizardProps) {
   }
 
   const getResult = (): StudyProfile => {
-    const counts: Record<StudyProfile, number> = { Visual: 0, Auditory: 0, Kinesthetic: 0 }
+    const counts: Record<StudyProfile, number> = { Visual: 0, Auditivo: 0, Kinestesico: 0 }
     Object.values(answers).forEach((profile) => {
       counts[profile]++
     })
@@ -57,22 +63,20 @@ export function DiagnosticWizard({ onComplete }: DiagnosticWizardProps) {
               <CheckCircle2 className="h-10 w-10 text-success" />
             </div>
             <h2 className="mb-2 font-display text-2xl font-bold text-card-foreground">
-              Assessment Complete!
+              Evaluacion Completa
             </h2>
             <p className="mb-6 text-muted-foreground leading-relaxed">
-              Based on your responses, we&apos;ve identified your learning style.
+              Basandonos en tus respuestas, hemos identificado tu estilo de aprendizaje.
             </p>
             <div className="mb-8 rounded-xl bg-primary/5 px-8 py-6">
-              <p className="mb-1 text-sm font-medium text-muted-foreground">Your Study Profile</p>
+              <p className="mb-1 text-sm font-medium text-muted-foreground">Tu Perfil de Estudio</p>
               <p className="font-display text-3xl font-bold text-primary">{result}</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                {result === "Visual" && "You learn best through images, diagrams, and visual demonstrations."}
-                {result === "Auditory" && "You learn best through listening, discussions, and verbal explanations."}
-                {result === "Kinesthetic" && "You learn best through hands-on practice and physical engagement."}
+                {profileDescriptions[result]}
               </p>
             </div>
             <Button size="lg" className="gap-2" onClick={() => onComplete(result)}>
-              Start Learning
+              Comenzar a Aprender
               <ArrowRight className="h-4 w-4" />
             </Button>
           </CardContent>
@@ -89,10 +93,10 @@ export function DiagnosticWizard({ onComplete }: DiagnosticWizardProps) {
             <Brain className="h-7 w-7 text-primary" />
           </div>
           <h1 className="mb-1 font-display text-2xl font-bold text-foreground">
-            Learning Style Assessment
+            Evaluacion de Estilo de Aprendizaje
           </h1>
           <p className="text-muted-foreground">
-            Answer a few questions so we can personalize your experience.
+            Responde algunas preguntas para personalizar tu experiencia.
           </p>
         </div>
 
@@ -142,10 +146,10 @@ export function DiagnosticWizard({ onComplete }: DiagnosticWizardProps) {
                 className="gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back
+                Atras
               </Button>
               <Button onClick={handleNext} disabled={!hasAnswered} className="gap-2">
-                {currentStep === totalSteps - 1 ? "See Results" : "Next"}
+                {currentStep === totalSteps - 1 ? "Ver Resultados" : "Siguiente"}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>

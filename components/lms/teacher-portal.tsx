@@ -14,6 +14,7 @@ interface TeacherPortalProps {
 
 export function TeacherPortal({ onExit }: TeacherPortalProps) {
   const [currentView, setCurrentView] = useState<TeacherView>("analytics")
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   return (
     <div className="flex h-screen bg-background">
@@ -21,6 +22,8 @@ export function TeacherPortal({ onExit }: TeacherPortalProps) {
         currentView={currentView}
         onNavigate={setCurrentView}
         onExit={onExit}
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
       {currentView === "analytics" && <StudentAnalytics />}

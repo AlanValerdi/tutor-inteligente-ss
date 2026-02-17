@@ -1,8 +1,17 @@
 // Mock data store for the LMS application
 
-export type StudyProfile = "Visual" | "Auditory" | "Kinesthetic"
-export type AnxietyLevel = "Low" | "Medium" | "High"
+export type StudyProfile = "Visual" | "Auditivo" | "Kinestesico"
+export type AnxietyLevel = "Bajo" | "Medio" | "Alto"
 export type TopicStatus = "completed" | "current" | "locked"
+
+export interface AnxietyMetrics {
+  tabSwitches: number[]       // per-session tab switch count (last 10 sessions)
+  consecutiveClicks: number[] // rapid consecutive clicks per session
+  missedClicks: number[]      // misclicks per session
+  timePerQuestion: number[]   // avg seconds per quiz question per session
+  idleTime: number[]          // idle seconds before answering per session
+  scrollReversals: number[]   // scroll up/down reversals per session
+}
 
 export interface Student {
   id: string
@@ -14,6 +23,12 @@ export interface Student {
   progress: number
   enrolledCourses: string[]
   completedDiagnostic: boolean
+  profileScores: {
+    Visual: number
+    Auditivo: number
+    Kinestesico: number
+  }
+  anxietyMetrics: AnxietyMetrics
 }
 
 export interface QuizQuestion {
@@ -43,6 +58,7 @@ export interface Course {
   topics: Topic[]
   studentsEnrolled: number
   category: string
+  enrollmentKey?: string
 }
 
 export interface DiagnosticQuestion {
@@ -54,213 +70,220 @@ export interface DiagnosticQuestion {
 export const diagnosticQuestions: DiagnosticQuestion[] = [
   {
     id: "d1",
-    question: "When learning something new, I prefer to...",
+    question: "Cuando aprendo algo nuevo, prefiero...",
     options: [
-      { label: "Watch a video or look at diagrams", profile: "Visual" },
-      { label: "Listen to an explanation or podcast", profile: "Auditory" },
-      { label: "Try it out hands-on with practice exercises", profile: "Kinesthetic" },
+      { label: "Ver un video o mirar diagramas", profile: "Visual" },
+      { label: "Escuchar una explicacion o podcast", profile: "Auditivo" },
+      { label: "Probarlo con ejercicios practicos", profile: "Kinestesico" },
     ],
   },
   {
     id: "d2",
-    question: "I remember information best when I...",
+    question: "Recuerdo mejor la informacion cuando...",
     options: [
-      { label: "See it written down or in a chart", profile: "Visual" },
-      { label: "Hear it spoken aloud or discuss it", profile: "Auditory" },
-      { label: "Physically engage with the material", profile: "Kinesthetic" },
+      { label: "La veo escrita o en un grafico", profile: "Visual" },
+      { label: "La escucho en voz alta o la discuto", profile: "Auditivo" },
+      { label: "Interactuo fisicamente con el material", profile: "Kinestesico" },
     ],
   },
   {
     id: "d3",
-    question: "When studying for a test, I usually...",
+    question: "Cuando estudio para un examen, generalmente...",
     options: [
-      { label: "Review notes, highlight key points, and use color coding", profile: "Visual" },
-      { label: "Read notes aloud or explain concepts to others", profile: "Auditory" },
-      { label: "Create flashcards and walk around while reviewing", profile: "Kinesthetic" },
+      { label: "Reviso notas, resalto puntos clave y uso colores", profile: "Visual" },
+      { label: "Leo notas en voz alta o explico conceptos a otros", profile: "Auditivo" },
+      { label: "Creo tarjetas y camino mientras repaso", profile: "Kinestesico" },
     ],
   },
   {
     id: "d4",
-    question: "In a classroom, I learn best when the teacher...",
+    question: "En clase, aprendo mejor cuando el profesor...",
     options: [
-      { label: "Uses slides, diagrams, and visual demonstrations", profile: "Visual" },
-      { label: "Explains concepts through lectures and discussions", profile: "Auditory" },
-      { label: "Includes group activities and hands-on experiments", profile: "Kinesthetic" },
+      { label: "Usa diapositivas, diagramas y demostraciones visuales", profile: "Visual" },
+      { label: "Explica conceptos a traves de charlas y discusiones", profile: "Auditivo" },
+      { label: "Incluye actividades grupales y experimentos practicos", profile: "Kinestesico" },
     ],
   },
   {
     id: "d5",
-    question: "When I need to solve a problem, I typically...",
+    question: "Cuando necesito resolver un problema, generalmente...",
     options: [
-      { label: "Draw it out or visualize the solution", profile: "Visual" },
-      { label: "Talk through the problem step by step", profile: "Auditory" },
-      { label: "Build a model or physically work through it", profile: "Kinesthetic" },
+      { label: "Lo dibujo o visualizo la solucion", profile: "Visual" },
+      { label: "Hablo sobre el problema paso a paso", profile: "Auditivo" },
+      { label: "Construyo un modelo o lo resuelvo fisicamente", profile: "Kinestesico" },
     ],
   },
 ]
 
+const sessionLabels = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10"]
+
+export { sessionLabels }
+
 export const courses: Course[] = [
   {
     id: "math-101",
-    title: "Mathematics Fundamentals",
-    description: "Build a strong foundation in algebra, geometry, and basic calculus.",
+    title: "Fundamentos de Matematicas",
+    description: "Construye una base solida en algebra, geometria y calculo basico.",
     icon: "Calculator",
-    category: "Mathematics",
+    category: "Matematicas",
     studentsEnrolled: 156,
+    enrollmentKey: "MATH-2026-XK9",
     topics: [
       {
         id: "t1",
-        title: "Introduction to Algebra",
-        description: "Learn the basics of algebraic expressions, variables, and equations.",
+        title: "Introduccion al Algebra",
+        description: "Aprende los conceptos basicos de expresiones algebraicas, variables y ecuaciones.",
         status: "completed",
         duration: "45 min",
         videoUrl: "https://example.com/video/algebra-intro",
         audioUrl: "https://example.com/audio/algebra-intro",
-        textContent: "Algebra is the branch of mathematics dealing with symbols and the rules for manipulating those symbols. In algebra, those symbols represent quantities without fixed values, known as variables. The fundamental operations of algebra include addition, subtraction, multiplication, and division.\n\nVariables are symbols (usually letters) that represent unknown values. For example, in the equation x + 5 = 10, x is a variable representing the value 5.\n\nAlgebraic expressions combine variables, numbers, and operations. For example: 3x + 2y - 7 is an algebraic expression with two variables.\n\nKey concepts:\n- Constants are fixed values (like 5, -3, or pi)\n- Coefficients are numbers multiplied by variables (in 3x, 3 is the coefficient)\n- Like terms have the same variable raised to the same power\n- You can combine like terms: 2x + 3x = 5x",
+        textContent: "El algebra es la rama de las matematicas que se ocupa de simbolos y las reglas para manipular esos simbolos. En algebra, esos simbolos representan cantidades sin valores fijos, conocidas como variables.\n\nLas variables son simbolos (generalmente letras) que representan valores desconocidos. Por ejemplo, en la ecuacion x + 5 = 10, x es una variable que representa el valor 5.\n\nConceptos clave:\n- Las constantes son valores fijos (como 5, -3, o pi)\n- Los coeficientes son numeros multiplicados por variables (en 3x, 3 es el coeficiente)\n- Los terminos semejantes tienen la misma variable elevada a la misma potencia\n- Puedes combinar terminos semejantes: 2x + 3x = 5x",
         quiz: [
-          { id: "q1", question: "What is the value of x in: 2x + 4 = 10?", options: ["2", "3", "4", "5"], correctAnswer: 1 },
-          { id: "q2", question: "Simplify: 3x + 2x", options: ["5x", "6x", "5x^2", "6"], correctAnswer: 0 },
-          { id: "q3", question: "Which is NOT an algebraic expression?", options: ["3x + 2", "x^2 - 1", "5 + 3 = 8", "2y - 7"], correctAnswer: 2 },
+          { id: "q1", question: "Cual es el valor de x en: 2x + 4 = 10?", options: ["2", "3", "4", "5"], correctAnswer: 1 },
+          { id: "q2", question: "Simplifica: 3x + 2x", options: ["5x", "6x", "5x^2", "6"], correctAnswer: 0 },
+          { id: "q3", question: "Cual NO es una expresion algebraica?", options: ["3x + 2", "x^2 - 1", "5 + 3 = 8", "2y - 7"], correctAnswer: 2 },
         ],
       },
       {
         id: "t2",
-        title: "Linear Equations",
-        description: "Solve one-variable and two-variable linear equations and graph them.",
+        title: "Ecuaciones Lineales",
+        description: "Resuelve ecuaciones lineales de una y dos variables y graficalas.",
         status: "current",
         duration: "60 min",
         videoUrl: "https://example.com/video/linear-equations",
         audioUrl: "https://example.com/audio/linear-equations",
-        textContent: "A linear equation is an equation where the highest power of the variable is 1. The general form is ax + b = c, where a, b, and c are constants.\n\nTo solve a linear equation:\n1. Simplify both sides by combining like terms\n2. Move variable terms to one side and constants to the other\n3. Divide both sides by the coefficient of the variable\n\nExample: Solve 3x + 7 = 22\nStep 1: Subtract 7 from both sides: 3x = 15\nStep 2: Divide both sides by 3: x = 5\n\nTwo-variable linear equations (y = mx + b) can be graphed on a coordinate plane, creating a straight line. The slope (m) represents the rate of change, and the y-intercept (b) is where the line crosses the y-axis.",
+        textContent: "Una ecuacion lineal es una ecuacion donde la mayor potencia de la variable es 1. La forma general es ax + b = c, donde a, b y c son constantes.\n\nPara resolver una ecuacion lineal:\n1. Simplifica ambos lados combinando terminos semejantes\n2. Mueve los terminos variables a un lado y las constantes al otro\n3. Divide ambos lados por el coeficiente de la variable\n\nEjemplo: Resuelve 3x + 7 = 22\nPaso 1: Resta 7 de ambos lados: 3x = 15\nPaso 2: Divide ambos lados por 3: x = 5",
         quiz: [
-          { id: "q4", question: "Solve: 5x - 3 = 12", options: ["2", "3", "4", "5"], correctAnswer: 1 },
-          { id: "q5", question: "What is the slope in y = 3x + 2?", options: ["2", "3", "5", "1"], correctAnswer: 1 },
-          { id: "q6", question: "A linear equation's graph is always a...", options: ["Curve", "Circle", "Straight line", "Parabola"], correctAnswer: 2 },
+          { id: "q4", question: "Resuelve: 5x - 3 = 12", options: ["2", "3", "4", "5"], correctAnswer: 1 },
+          { id: "q5", question: "Cual es la pendiente en y = 3x + 2?", options: ["2", "3", "5", "1"], correctAnswer: 1 },
+          { id: "q6", question: "La grafica de una ecuacion lineal siempre es una...", options: ["Curva", "Circulo", "Linea recta", "Parabola"], correctAnswer: 2 },
         ],
       },
       {
         id: "t3",
-        title: "Quadratic Equations",
-        description: "Understand and solve quadratic equations using factoring and the quadratic formula.",
+        title: "Ecuaciones Cuadraticas",
+        description: "Comprende y resuelve ecuaciones cuadraticas usando factorizacion y la formula cuadratica.",
         status: "locked",
         duration: "75 min",
         videoUrl: "https://example.com/video/quadratics",
         audioUrl: "https://example.com/audio/quadratics",
-        textContent: "A quadratic equation has the form ax^2 + bx + c = 0, where a is not zero. The graph of a quadratic is a parabola.\n\nMethods to solve:\n1. Factoring: Rewrite the equation as (x - r1)(x - r2) = 0\n2. Quadratic Formula: x = (-b +/- sqrt(b^2 - 4ac)) / 2a\n3. Completing the square\n\nThe discriminant (b^2 - 4ac) determines the number of solutions:\n- Positive: two distinct real solutions\n- Zero: one repeated solution\n- Negative: no real solutions",
+        textContent: "Una ecuacion cuadratica tiene la forma ax^2 + bx + c = 0, donde a no es cero. La grafica de una cuadratica es una parabola.\n\nMetodos para resolver:\n1. Factorizacion: Reescribe la ecuacion como (x - r1)(x - r2) = 0\n2. Formula cuadratica: x = (-b +/- sqrt(b^2 - 4ac)) / 2a\n3. Completar el cuadrado",
         quiz: [
-          { id: "q7", question: "What is the degree of a quadratic equation?", options: ["1", "2", "3", "4"], correctAnswer: 1 },
-          { id: "q8", question: "The graph of a quadratic equation is a...", options: ["Line", "Circle", "Parabola", "Hyperbola"], correctAnswer: 2 },
-          { id: "q9", question: "In x^2 - 5x + 6 = 0, what are the roots?", options: ["1 and 6", "2 and 3", "-2 and -3", "1 and 5"], correctAnswer: 1 },
+          { id: "q7", question: "Cual es el grado de una ecuacion cuadratica?", options: ["1", "2", "3", "4"], correctAnswer: 1 },
+          { id: "q8", question: "La grafica de una ecuacion cuadratica es una...", options: ["Linea", "Circulo", "Parabola", "Hiperbola"], correctAnswer: 2 },
+          { id: "q9", question: "En x^2 - 5x + 6 = 0, cuales son las raices?", options: ["1 y 6", "2 y 3", "-2 y -3", "1 y 5"], correctAnswer: 1 },
         ],
       },
       {
         id: "t4",
-        title: "Introduction to Geometry",
-        description: "Explore points, lines, angles, and basic geometric shapes.",
+        title: "Introduccion a la Geometria",
+        description: "Explora puntos, lineas, angulos y figuras geometricas basicas.",
         status: "locked",
         duration: "50 min",
         videoUrl: "https://example.com/video/geometry-intro",
         audioUrl: "https://example.com/audio/geometry-intro",
-        textContent: "Geometry is the branch of mathematics concerned with shapes, sizes, and the properties of space.",
+        textContent: "La geometria es la rama de las matematicas que se ocupa de las formas, tamanos y las propiedades del espacio.",
         quiz: [
-          { id: "q10", question: "How many degrees in a right angle?", options: ["45", "90", "180", "360"], correctAnswer: 1 },
-          { id: "q11", question: "A triangle has how many sides?", options: ["2", "3", "4", "5"], correctAnswer: 1 },
-          { id: "q12", question: "Sum of angles in a triangle?", options: ["90", "180", "270", "360"], correctAnswer: 1 },
+          { id: "q10", question: "Cuantos grados tiene un angulo recto?", options: ["45", "90", "180", "360"], correctAnswer: 1 },
+          { id: "q11", question: "Un triangulo tiene cuantos lados?", options: ["2", "3", "4", "5"], correctAnswer: 1 },
+          { id: "q12", question: "Suma de angulos en un triangulo?", options: ["90", "180", "270", "360"], correctAnswer: 1 },
         ],
       },
     ],
   },
   {
     id: "prog-101",
-    title: "Introduction to Programming",
-    description: "Learn programming fundamentals with hands-on coding exercises.",
+    title: "Introduccion a la Programacion",
+    description: "Aprende los fundamentos de programacion con ejercicios practicos de codigo.",
     icon: "Code",
-    category: "Computer Science",
+    category: "Ciencias de la Computacion",
     studentsEnrolled: 203,
+    enrollmentKey: "PROG-2026-AB3",
     topics: [
       {
         id: "p1",
-        title: "Variables and Data Types",
-        description: "Understand the building blocks of programming: variables, strings, numbers, and booleans.",
+        title: "Variables y Tipos de Datos",
+        description: "Comprende los bloques fundamentales de la programacion: variables, cadenas, numeros y booleanos.",
         status: "completed",
         duration: "40 min",
         videoUrl: "https://example.com/video/variables",
         audioUrl: "https://example.com/audio/variables",
-        textContent: "Variables are containers for storing data values. Every variable has a name and a type.\n\nCommon data types:\n- String: Text values wrapped in quotes (\"Hello World\")\n- Number/Integer: Whole numbers (42, -7)\n- Float/Decimal: Numbers with decimal points (3.14)\n- Boolean: True or false values\n\nVariable naming rules:\n- Must start with a letter or underscore\n- Cannot contain spaces\n- Case-sensitive (myVar and MyVar are different)\n- Should be descriptive (use 'userName' not just 'u')",
+        textContent: "Las variables son contenedores para almacenar valores de datos. Cada variable tiene un nombre y un tipo.\n\nTipos de datos comunes:\n- String: Valores de texto entre comillas (\"Hola Mundo\")\n- Number/Integer: Numeros enteros (42, -7)\n- Float/Decimal: Numeros con punto decimal (3.14)\n- Boolean: Valores verdadero o falso",
         quiz: [
-          { id: "pq1", question: "Which is a valid variable name?", options: ["2name", "my-var", "myVar", "my var"], correctAnswer: 2 },
-          { id: "pq2", question: "What data type is 'true'?", options: ["String", "Number", "Boolean", "Float"], correctAnswer: 2 },
-          { id: "pq3", question: "What data type is 3.14?", options: ["Integer", "Float", "String", "Boolean"], correctAnswer: 1 },
+          { id: "pq1", question: "Cual es un nombre de variable valido?", options: ["2nombre", "mi-var", "miVar", "mi var"], correctAnswer: 2 },
+          { id: "pq2", question: "Que tipo de dato es 'true'?", options: ["String", "Number", "Boolean", "Float"], correctAnswer: 2 },
+          { id: "pq3", question: "Que tipo de dato es 3.14?", options: ["Integer", "Float", "String", "Boolean"], correctAnswer: 1 },
         ],
       },
       {
         id: "p2",
-        title: "Control Flow",
-        description: "Learn about if/else statements, loops, and conditional logic.",
+        title: "Flujo de Control",
+        description: "Aprende sobre sentencias if/else, bucles y logica condicional.",
         status: "current",
         duration: "55 min",
         videoUrl: "https://example.com/video/control-flow",
         audioUrl: "https://example.com/audio/control-flow",
-        textContent: "Control flow determines the order in which code executes. The three main control structures are:\n\n1. Sequential: Code runs line by line from top to bottom\n2. Selection: if/else statements choose between paths\n3. Iteration: Loops repeat code blocks\n\nIf/else statements:\nif (condition) { /* code if true */ } else { /* code if false */ }\n\nLoops:\n- for loop: Repeat a set number of times\n- while loop: Repeat while a condition is true\n- do-while loop: Execute once, then check condition",
+        textContent: "El flujo de control determina el orden en que se ejecuta el codigo. Las tres principales estructuras de control son:\n\n1. Secuencial: El codigo se ejecuta linea por linea\n2. Seleccion: Las sentencias if/else eligen entre caminos\n3. Iteracion: Los bucles repiten bloques de codigo",
         quiz: [
-          { id: "pq4", question: "What does an if statement check?", options: ["A loop", "A condition", "A variable name", "A function"], correctAnswer: 1 },
-          { id: "pq5", question: "Which loop always runs at least once?", options: ["for", "while", "do-while", "foreach"], correctAnswer: 2 },
-          { id: "pq6", question: "What is iteration?", options: ["Declaring variables", "Repeating code", "Defining functions", "Importing modules"], correctAnswer: 1 },
+          { id: "pq4", question: "Que verifica una sentencia if?", options: ["Un bucle", "Una condicion", "Un nombre de variable", "Una funcion"], correctAnswer: 1 },
+          { id: "pq5", question: "Que bucle siempre se ejecuta al menos una vez?", options: ["for", "while", "do-while", "foreach"], correctAnswer: 2 },
+          { id: "pq6", question: "Que es la iteracion?", options: ["Declarar variables", "Repetir codigo", "Definir funciones", "Importar modulos"], correctAnswer: 1 },
         ],
       },
       {
         id: "p3",
-        title: "Functions",
-        description: "Create reusable blocks of code with functions and parameters.",
+        title: "Funciones",
+        description: "Crea bloques reutilizables de codigo con funciones y parametros.",
         status: "locked",
         duration: "50 min",
         videoUrl: "https://example.com/video/functions",
         audioUrl: "https://example.com/audio/functions",
-        textContent: "Functions are reusable blocks of code designed to perform a specific task.",
+        textContent: "Las funciones son bloques reutilizables de codigo disenados para realizar una tarea especifica.",
         quiz: [
-          { id: "pq7", question: "What keyword defines a function in JavaScript?", options: ["def", "func", "function", "method"], correctAnswer: 2 },
-          { id: "pq8", question: "What is a function's return value?", options: ["Its name", "Its output", "Its parameters", "Its loop count"], correctAnswer: 1 },
-          { id: "pq9", question: "What are parameters?", options: ["Return values", "Function names", "Input values to a function", "Loop counters"], correctAnswer: 2 },
+          { id: "pq7", question: "Que palabra clave define una funcion en JavaScript?", options: ["def", "func", "function", "method"], correctAnswer: 2 },
+          { id: "pq8", question: "Que es el valor de retorno de una funcion?", options: ["Su nombre", "Su salida", "Sus parametros", "Su contador"], correctAnswer: 1 },
+          { id: "pq9", question: "Que son los parametros?", options: ["Valores de retorno", "Nombres de funciones", "Valores de entrada a una funcion", "Contadores de bucle"], correctAnswer: 2 },
         ],
       },
     ],
   },
   {
     id: "sci-101",
-    title: "Science Foundations",
-    description: "Explore the natural world through physics, chemistry, and biology basics.",
+    title: "Fundamentos de Ciencias",
+    description: "Explora el mundo natural a traves de los conceptos basicos de fisica, quimica y biologia.",
     icon: "Atom",
-    category: "Science",
+    category: "Ciencias",
     studentsEnrolled: 134,
+    enrollmentKey: "SCI-2026-QR7",
     topics: [
       {
         id: "s1",
-        title: "Introduction to Physics",
-        description: "Understand fundamental concepts of motion, force, and energy.",
+        title: "Introduccion a la Fisica",
+        description: "Comprende los conceptos fundamentales de movimiento, fuerza y energia.",
         status: "current",
         duration: "55 min",
         videoUrl: "https://example.com/video/physics-intro",
         audioUrl: "https://example.com/audio/physics-intro",
-        textContent: "Physics is the study of matter, energy, and the interactions between them. Fundamental concepts include:\n\n- Motion: Objects change position over time\n- Force: A push or pull that changes an object's motion\n- Energy: The ability to do work\n- Newton's Laws of Motion describe how forces affect objects",
+        textContent: "La fisica es el estudio de la materia, la energia y las interacciones entre ellas. Los conceptos fundamentales incluyen:\n\n- Movimiento: Los objetos cambian de posicion con el tiempo\n- Fuerza: Un empujon o jalon que cambia el movimiento de un objeto\n- Energia: La capacidad de realizar trabajo\n- Las Leyes de Newton del Movimiento describen como las fuerzas afectan a los objetos",
         quiz: [
-          { id: "sq1", question: "What is force?", options: ["A type of energy", "A push or pull", "A unit of measurement", "A chemical reaction"], correctAnswer: 1 },
-          { id: "sq2", question: "Who formulated the laws of motion?", options: ["Einstein", "Newton", "Galileo", "Hawking"], correctAnswer: 1 },
-          { id: "sq3", question: "Energy is the ability to do...", options: ["Force", "Motion", "Work", "Gravity"], correctAnswer: 2 },
+          { id: "sq1", question: "Que es la fuerza?", options: ["Un tipo de energia", "Un empujon o jalon", "Una unidad de medida", "Una reaccion quimica"], correctAnswer: 1 },
+          { id: "sq2", question: "Quien formulo las leyes del movimiento?", options: ["Einstein", "Newton", "Galileo", "Hawking"], correctAnswer: 1 },
+          { id: "sq3", question: "La energia es la capacidad de hacer...", options: ["Fuerza", "Movimiento", "Trabajo", "Gravedad"], correctAnswer: 2 },
         ],
       },
       {
         id: "s2",
-        title: "Basic Chemistry",
-        description: "Learn about atoms, elements, compounds, and chemical reactions.",
+        title: "Quimica Basica",
+        description: "Aprende sobre atomos, elementos, compuestos y reacciones quimicas.",
         status: "locked",
         duration: "60 min",
         videoUrl: "https://example.com/video/chemistry",
         audioUrl: "https://example.com/audio/chemistry",
-        textContent: "Chemistry is the study of matter and the changes it undergoes.",
+        textContent: "La quimica es el estudio de la materia y los cambios que sufre.",
         quiz: [
-          { id: "sq4", question: "What is the smallest unit of an element?", options: ["Molecule", "Atom", "Cell", "Electron"], correctAnswer: 1 },
-          { id: "sq5", question: "H2O is the formula for...", options: ["Oxygen", "Hydrogen", "Water", "Carbon dioxide"], correctAnswer: 2 },
-          { id: "sq6", question: "The periodic table organizes...", options: ["Molecules", "Compounds", "Elements", "Reactions"], correctAnswer: 2 },
+          { id: "sq4", question: "Cual es la unidad mas pequena de un elemento?", options: ["Molecula", "Atomo", "Celula", "Electron"], correctAnswer: 1 },
+          { id: "sq5", question: "H2O es la formula del...", options: ["Oxigeno", "Hidrogeno", "Agua", "Dioxido de carbono"], correctAnswer: 2 },
+          { id: "sq6", question: "La tabla periodica organiza...", options: ["Moleculas", "Compuestos", "Elementos", "Reacciones"], correctAnswer: 2 },
         ],
       },
     ],
@@ -268,12 +291,44 @@ export const courses: Course[] = [
 ]
 
 export const students: Student[] = [
-  { id: "s1", name: "Alice Johnson", avatar: "AJ", profile: "Visual", anxietyLevel: "Low", averageScore: 92, progress: 78, enrolledCourses: ["math-101", "prog-101"], completedDiagnostic: true },
-  { id: "s2", name: "Bob Williams", avatar: "BW", profile: "Auditory", anxietyLevel: "Medium", averageScore: 85, progress: 65, enrolledCourses: ["math-101", "sci-101"], completedDiagnostic: true },
-  { id: "s3", name: "Clara Davis", avatar: "CD", profile: "Kinesthetic", anxietyLevel: "Low", averageScore: 88, progress: 82, enrolledCourses: ["prog-101"], completedDiagnostic: true },
-  { id: "s4", name: "Daniel Martinez", avatar: "DM", profile: "Visual", anxietyLevel: "High", averageScore: 71, progress: 45, enrolledCourses: ["math-101", "sci-101", "prog-101"], completedDiagnostic: true },
-  { id: "s5", name: "Emma Brown", avatar: "EB", profile: "Auditory", anxietyLevel: "Low", averageScore: 95, progress: 90, enrolledCourses: ["math-101", "prog-101"], completedDiagnostic: true },
-  { id: "s6", name: "Frank Wilson", avatar: "FW", profile: "Kinesthetic", anxietyLevel: "Medium", averageScore: 78, progress: 55, enrolledCourses: ["sci-101"], completedDiagnostic: true },
-  { id: "s7", name: "Grace Lee", avatar: "GL", profile: "Visual", anxietyLevel: "Low", averageScore: 90, progress: 72, enrolledCourses: ["math-101", "prog-101", "sci-101"], completedDiagnostic: true },
-  { id: "s8", name: "Henry Taylor", avatar: "HT", profile: "Auditory", anxietyLevel: "High", averageScore: 67, progress: 38, enrolledCourses: ["math-101"], completedDiagnostic: true },
+  {
+    id: "s1", name: "Alice Johnson", avatar: "AJ", profile: "Visual", anxietyLevel: "Bajo", averageScore: 92, progress: 78, enrolledCourses: ["math-101", "prog-101"], completedDiagnostic: true,
+    profileScores: { Visual: 88, Auditivo: 72, Kinestesico: 65 },
+    anxietyMetrics: { tabSwitches: [2,1,3,0,1,2,1,0,1,2], consecutiveClicks: [1,0,2,0,1,0,0,1,0,1], missedClicks: [0,1,0,0,1,0,1,0,0,0], timePerQuestion: [18,15,20,16,14,19,17,15,16,18], idleTime: [3,2,4,1,2,3,2,1,3,2], scrollReversals: [1,2,1,0,1,2,1,1,0,1] }
+  },
+  {
+    id: "s2", name: "Bob Williams", avatar: "BW", profile: "Auditivo", anxietyLevel: "Medio", averageScore: 85, progress: 65, enrolledCourses: ["math-101", "sci-101"], completedDiagnostic: true,
+    profileScores: { Visual: 60, Auditivo: 85, Kinestesico: 70 },
+    anxietyMetrics: { tabSwitches: [5,4,6,3,5,4,7,5,4,6], consecutiveClicks: [3,2,4,2,3,5,2,3,4,3], missedClicks: [2,3,1,2,3,2,1,3,2,2], timePerQuestion: [25,22,28,24,26,23,27,25,24,26], idleTime: [8,6,9,7,8,6,10,7,8,9], scrollReversals: [4,3,5,4,3,5,4,3,5,4] }
+  },
+  {
+    id: "s3", name: "Clara Davis", avatar: "CD", profile: "Kinestesico", anxietyLevel: "Bajo", averageScore: 88, progress: 82, enrolledCourses: ["prog-101"], completedDiagnostic: true,
+    profileScores: { Visual: 55, Auditivo: 62, Kinestesico: 90 },
+    anxietyMetrics: { tabSwitches: [1,0,2,1,0,1,0,1,0,1], consecutiveClicks: [0,1,0,0,1,0,0,0,1,0], missedClicks: [0,0,1,0,0,0,1,0,0,0], timePerQuestion: [12,14,11,13,12,15,13,12,14,11], idleTime: [2,1,2,1,1,2,1,2,1,1], scrollReversals: [0,1,0,1,0,0,1,0,1,0] }
+  },
+  {
+    id: "s4", name: "Daniel Martinez", avatar: "DM", profile: "Visual", anxietyLevel: "Alto", averageScore: 71, progress: 45, enrolledCourses: ["math-101", "sci-101", "prog-101"], completedDiagnostic: true,
+    profileScores: { Visual: 78, Auditivo: 65, Kinestesico: 58 },
+    anxietyMetrics: { tabSwitches: [12,10,14,11,13,15,12,14,11,13], consecutiveClicks: [8,7,9,6,8,10,7,9,8,7], missedClicks: [5,6,4,7,5,6,8,5,6,7], timePerQuestion: [45,42,50,38,48,44,52,40,46,43], idleTime: [20,18,25,22,19,24,21,23,20,22], scrollReversals: [8,9,7,10,8,9,11,8,9,10] }
+  },
+  {
+    id: "s5", name: "Emma Brown", avatar: "EB", profile: "Auditivo", anxietyLevel: "Bajo", averageScore: 95, progress: 90, enrolledCourses: ["math-101", "prog-101"], completedDiagnostic: true,
+    profileScores: { Visual: 70, Auditivo: 95, Kinestesico: 68 },
+    anxietyMetrics: { tabSwitches: [0,1,0,0,1,0,0,1,0,0], consecutiveClicks: [0,0,1,0,0,0,0,1,0,0], missedClicks: [0,0,0,1,0,0,0,0,1,0], timePerQuestion: [10,12,11,13,10,11,12,10,11,12], idleTime: [1,2,1,1,2,1,1,2,1,1], scrollReversals: [0,0,1,0,0,1,0,0,0,1] }
+  },
+  {
+    id: "s6", name: "Frank Wilson", avatar: "FW", profile: "Kinestesico", anxietyLevel: "Medio", averageScore: 78, progress: 55, enrolledCourses: ["sci-101"], completedDiagnostic: true,
+    profileScores: { Visual: 58, Auditivo: 65, Kinestesico: 82 },
+    anxietyMetrics: { tabSwitches: [4,3,5,4,3,5,4,3,4,5], consecutiveClicks: [2,3,2,3,2,4,2,3,2,3], missedClicks: [1,2,1,2,1,1,2,1,2,1], timePerQuestion: [22,20,24,21,23,22,25,20,23,21], idleTime: [6,5,7,6,5,8,6,5,7,6], scrollReversals: [3,2,4,3,2,3,4,2,3,3] }
+  },
+  {
+    id: "s7", name: "Grace Lee", avatar: "GL", profile: "Visual", anxietyLevel: "Bajo", averageScore: 90, progress: 72, enrolledCourses: ["math-101", "prog-101", "sci-101"], completedDiagnostic: true,
+    profileScores: { Visual: 92, Auditivo: 68, Kinestesico: 60 },
+    anxietyMetrics: { tabSwitches: [1,2,1,0,1,1,2,0,1,1], consecutiveClicks: [0,1,0,1,0,0,1,0,0,1], missedClicks: [0,0,1,0,0,1,0,0,0,1], timePerQuestion: [14,16,13,15,14,16,15,13,14,15], idleTime: [2,3,2,2,3,2,2,3,2,2], scrollReversals: [1,1,0,1,1,0,1,1,0,1] }
+  },
+  {
+    id: "s8", name: "Henry Taylor", avatar: "HT", profile: "Auditivo", anxietyLevel: "Alto", averageScore: 67, progress: 38, enrolledCourses: ["math-101"], completedDiagnostic: true,
+    profileScores: { Visual: 55, Auditivo: 72, Kinestesico: 50 },
+    anxietyMetrics: { tabSwitches: [15,12,18,14,16,13,17,15,14,16], consecutiveClicks: [10,8,12,9,11,8,13,10,9,11], missedClicks: [7,8,6,9,7,8,10,7,8,9], timePerQuestion: [55,50,60,48,58,52,62,50,56,54], idleTime: [25,22,30,28,24,32,26,28,25,27], scrollReversals: [10,12,9,11,10,12,13,10,11,12] }
+  },
 ]

@@ -29,28 +29,28 @@ export function StudentDashboard({ profile, onSelectCourse }: StudentDashboardPr
 
   const stats = [
     {
-      label: "Enrolled Courses",
+      label: "Cursos Inscritos",
       value: enrolledCourses.length,
       icon: BookOpen,
       color: "text-primary",
       bg: "bg-primary/10",
     },
     {
-      label: "Overall Progress",
+      label: "Progreso General",
       value: `${overallProgress}%`,
       icon: TrendingUp,
       color: "text-accent",
       bg: "bg-accent/10",
     },
     {
-      label: "Topics Completed",
+      label: "Temas Completados",
       value: `${completedTopics}/${totalTopics}`,
       icon: Award,
       color: "text-success",
       bg: "bg-success/10",
     },
     {
-      label: "Study Profile",
+      label: "Perfil de Estudio",
       value: profile,
       icon: Clock,
       color: "text-primary",
@@ -63,11 +63,11 @@ export function StudentDashboard({ profile, onSelectCourse }: StudentDashboardPr
       <div className="px-8 py-8">
         <div className="mb-8">
           <h1 className="mb-1 font-display text-2xl font-bold text-foreground">
-            Welcome back!
+            Bienvenido de vuelta
           </h1>
           <p className="text-muted-foreground">
-            Continue your learning journey. Your content is personalized for{" "}
-            <span className="font-medium text-primary">{profile}</span> learning.
+            Continua tu camino de aprendizaje. Tu contenido esta personalizado para aprendizaje{" "}
+            <span className="font-medium text-primary">{profile}</span>.
           </p>
         </div>
 
@@ -88,8 +88,8 @@ export function StudentDashboard({ profile, onSelectCourse }: StudentDashboardPr
         </div>
 
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold text-foreground">My Courses</h2>
-          <span className="text-sm text-muted-foreground">{enrolledCourses.length} courses</span>
+          <h2 className="font-display text-lg font-semibold text-foreground">Mis Cursos</h2>
+          <span className="text-sm text-muted-foreground">{enrolledCourses.length} cursos</span>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -121,7 +121,7 @@ export function StudentDashboard({ profile, onSelectCourse }: StudentDashboardPr
                   </p>
                   <div className="mb-2 flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">
-                      {completed}/{course.topics.length} topics
+                      {completed}/{course.topics.length} temas
                     </span>
                     <span className="font-medium text-primary">{courseProgress}%</span>
                   </div>
@@ -131,7 +131,7 @@ export function StudentDashboard({ profile, onSelectCourse }: StudentDashboardPr
                     size="sm"
                     className="mt-4 w-full gap-2 text-primary hover:text-primary hover:bg-primary/5 group-hover:gap-3 transition-all"
                   >
-                    Continue Learning
+                    Continuar Aprendiendo
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </CardContent>

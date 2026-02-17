@@ -20,6 +20,7 @@ export function StudentPortal({ onExit }: StudentPortalProps) {
   const [currentView, setCurrentView] = useState<StudentView>("dashboard")
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const handleDiagnosticComplete = (detectedProfile: StudyProfile) => {
     setProfile(detectedProfile)
@@ -48,7 +49,6 @@ export function StudentPortal({ onExit }: StudentPortalProps) {
   }
 
   const handleTopicComplete = () => {
-    // In a real app, this would update the database
     handleBackToCourse()
   }
 
@@ -81,8 +81,10 @@ export function StudentPortal({ onExit }: StudentPortalProps) {
           else setCurrentView(view)
         }}
         onExit={onExit}
-        studentName="Student User"
+        studentName="Estudiante"
         studentProfile={profile}
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
       {currentView === "dashboard" && (
