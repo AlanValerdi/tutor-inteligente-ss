@@ -282,7 +282,7 @@ export function StudentAnalytics() {
                               className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-foreground/10"
                               aria-label="Ver metricas de ansiedad"
                             >
-                              <MoreHorizontal className="h-3 w-3" />
+                              <SquareArrowOutUpRightIcon className="h-3 w-3" />
                             </button>
                           </span>
                         </td>
