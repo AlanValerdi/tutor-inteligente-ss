@@ -95,7 +95,7 @@ export function TeacherSidebar({ currentView, onNavigate, onExit, collapsed, onT
                 <Users className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-background">Dr. Smith</p>
+                <p className="truncate text-sm font-medium text-background">Profesora Arlem</p>
                 <p className="text-xs text-background/50">Instructor</p>
               </div>
             </div>
