@@ -274,12 +274,12 @@ export function StudentAnalytics() {
                         <td className="px-6 py-4">
                           <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${anxiety.bg} ${anxiety.text}`}>
                             <span className={`h-2 w-2 rounded-full ${anxiety.dot}`} />
-                            {student.anxietyLevel}
                             <button
                               onClick={() => setAnxietyDialogStudent(student)}
                               className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-foreground/10"
                               aria-label="Ver metricas de ansiedad"
                             >
+                              {student.anxietyLevel}
                               <SquareArrowOutUpRightIcon className="h-3 w-3" />
                             </button>
                           </span>
