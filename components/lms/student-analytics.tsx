@@ -11,8 +11,6 @@ import {
   Ear,
   Hand,
   ArrowUpDown,
-  MoreHorizontal,
-  CircleAlert,
   SquareArrowOutUpRightIcon,
 } from "lucide-react"
 import {
