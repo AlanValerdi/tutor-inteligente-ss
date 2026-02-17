@@ -12,6 +12,7 @@ import {
   Hand,
   ArrowUpDown,
   MoreHorizontal,
+  CircleAlert,
 } from "lucide-react"
 import {
   Bar, BarChart, Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
@@ -265,7 +266,7 @@ export function StudentAnalytics() {
                               className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-foreground/10"
                               aria-label="Ver detalle de perfil"
                             >
-                              <MoreHorizontal className="h-3 w-3" />
+                              <CircleAlert className="h-3 w-3" />
                             </button>
                           </span>
                         </td>
@@ -286,9 +287,8 @@ export function StudentAnalytics() {
                         </td>
 
                         <td className="px-6 py-4">
-                          <span className={`text-sm font-semibold ${
-                            student.averageScore >= 85 ? "text-success" : student.averageScore >= 70 ? "text-warning-foreground" : "text-destructive"
-                          }`}>
+                          <span className={`text-sm font-semibold ${student.averageScore >= 85 ? "text-success" : student.averageScore >= 70 ? "text-warning-foreground" : "text-destructive"
+                            }`}>
                             {student.averageScore}%
                           </span>
                         </td>
@@ -432,11 +432,10 @@ export function StudentAnalytics() {
                               setShowProfileAlert(true)
                             }
                           }}
-                          className={`flex items-center gap-4 rounded-xl border-2 px-5 py-4 text-left transition-all ${
-                            isCurrent
+                          className={`flex items-center gap-4 rounded-xl border-2 px-5 py-4 text-left transition-all ${isCurrent
                               ? "border-primary bg-primary/5"
                               : "border-border hover:border-primary/30 hover:bg-primary/5"
-                          }`}
+                            }`}
                         >
                           <Icon className={`h-5 w-5 ${isCurrent ? "text-primary" : "text-muted-foreground"}`} />
                           <div className="flex-1">
