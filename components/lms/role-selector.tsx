@@ -17,7 +17,7 @@ export function RoleSelector({ onSelectRole }: RoleSelectorProps) {
             <GraduationCap className="h-8 w-8 text-primary-foreground" />
           </div>
           <h1 className="mb-2 font-display text-4xl font-bold tracking-tight text-foreground text-balance">
-            Bienvenido a LearnFlow
+            Bienvenido a TutorInteligente
           </h1>
           <p className="text-lg text-muted-foreground text-pretty">
             Una plataforma de aprendizaje adaptativo que se adapta a tu ritmo.
