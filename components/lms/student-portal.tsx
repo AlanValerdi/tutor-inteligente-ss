@@ -12,7 +12,7 @@ interface StudentPortalProps {
   onExit: () => void
 }
 
-type StudentView = "dashboard" | "course" | "topic"
+type StudentView = "dashboard" | "course" | "topic" | "browse"
 
 export function StudentPortal({ onExit }: StudentPortalProps) {
   const [completedDiagnostic, setCompletedDiagnostic] = useState(false)
