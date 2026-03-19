@@ -29,13 +29,18 @@ interface CourseExplorerProps {
   availableCourses: Course[]
   onEnroll: (courseId: string, enrollKey: string) => Promise<void>
   onBack: () => void
+  isLoading?: boolean
+  isEnrolling?: boolean // External enrollment loading state
 }
 
-export function CourseExplorer({ availableCourses, onEnroll, onBack }: CourseExplorerProps) {
+export function CourseExplorer({ availableCourses, onEnroll, onBack, isLoading = false, isEnrolling: externalIsEnrolling = false }: CourseExplorerProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [enrollKey, setEnrollKey] = useState("")
   const [isEnrolling, setIsEnrolling] = useState(false)
+  
+  // Use external or internal enrollment loading state
+  const enrollmentInProgress = externalIsEnrolling || isEnrolling
 
   const filteredCourses = availableCourses.filter(course =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -99,7 +104,37 @@ export function CourseExplorer({ availableCourses, onEnroll, onBack }: CourseExp
         </div>
 
         {/* Courses Grid */}
-        {filteredCourses.length === 0 ? (
+        {isLoading ? (
+          // Loading skeleton
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="h-10 w-10 bg-muted rounded-lg"></div>
+                    <div className="h-5 w-16 bg-muted rounded-full"></div>
+                  </div>
+                  <div className="mt-3 h-4 bg-muted rounded w-3/4"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 mb-4">
+                    <div className="h-3 bg-muted rounded w-full"></div>
+                    <div className="h-3 bg-muted rounded w-2/3"></div>
+                  </div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-6 w-6 bg-muted rounded-full"></div>
+                    <div className="h-3 bg-muted rounded w-20"></div>
+                  </div>
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="h-3 bg-muted rounded w-24"></div>
+                    <div className="h-3 bg-muted rounded w-8"></div>
+                  </div>
+                  <div className="h-9 bg-muted rounded"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : filteredCourses.length === 0 ? (
           <Card className="border-dashed border-2 border-muted">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
@@ -188,8 +223,8 @@ export function CourseExplorer({ availableCourses, onEnroll, onBack }: CourseExp
                         >
                           Cancelar
                         </Button>
-                        <Button type="button" onClick={handleEnroll} disabled={isEnrolling}>
-                          {isEnrolling ? "Inscribiendo..." : "Confirmar Inscripción"}
+                        <Button type="button" onClick={handleEnroll} disabled={enrollmentInProgress}>
+                          {enrollmentInProgress ? "Inscribiendo..." : "Confirmar Inscripción"}
                         </Button>
                       </DialogFooter>
                     </DialogContent>

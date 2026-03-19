@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Space_Grotesk } from 'next/font/google'
+import { SWRProvider } from '@/components/providers/swr-provider'
 
 import './globals.css'
 
@@ -22,7 +23,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>{children}</body>
+      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
+        <SWRProvider>
+          {children}
+        </SWRProvider>
+      </body>
     </html>
   )
 }
