@@ -1,0 +1,419 @@
+"use server"
+
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/db"
+
+export async function getTeacherDashboardData() {
+  const session = await auth()
+  
+  if (!session?.user || session.user.role !== "TEACHER") {
+    throw new Error("No autorizado")
+  }
+
+  const teacherId = session.user.id
+
+  const [courses, enrollments] = await Promise.all([
+    prisma.course.findMany({
+      where: { teacherId },
+      include: {
+        _count: {
+          select: {
+            topics: true,
+            enrollments: true
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    }),
+    prisma.enrollment.findMany({
+      where: {
+        course: {
+          teacherId
+        }
+      },
+      select: {
+        progress: true
+      }
+    })
+  ])
+
+  const totalStudents = enrollments.length
+  const averageProgress = enrollments.length > 0
+    ? Math.round(enrollments.reduce((acc, e) => acc + e.progress, 0) / enrollments.length)
+    : 0
+
+  const publishedCourses = courses.filter(c => c.isPublished).length
+  const totalTopics = courses.reduce((acc, c) => acc + c._count.topics, 0)
+
+  return {
+    stats: {
+      totalCourses: courses.length,
+      publishedCourses,
+      totalStudents,
+      averageProgress,
+      totalTopics
+    },
+    recentCourses: courses.slice(0, 5).map(course => ({
+      id: course.id,
+      title: course.title,
+      isPublished: course.isPublished,
+      topicsCount: course._count.topics,
+      studentsCount: course._count.enrollments,
+      createdAt: course.createdAt
+    })),
+    allCourses: courses.map(course => ({
+      id: course.id,
+      title: course.title,
+      description: course.description,
+      isPublished: course.isPublished,
+      enrollKey: course.enrollKey,
+      topicsCount: course._count.topics,
+      studentsCount: course._count.enrollments,
+      createdAt: course.createdAt,
+      updatedAt: course.updatedAt
+    }))
+  }
+}
+
+export async function createCourse(data: {
+  title: string
+  description?: string
+  enrollKey: string
+}) {
+  const session = await auth()
+  
+  if (!session?.user || session.user.role !== "TEACHER") {
+    throw new Error("No autorizado")
+  }
+
+  const course = await prisma.course.create({
+    data: {
+      title: data.title,
+      description: data.description,
+      enrollKey: data.enrollKey,
+      teacherId: session.user.id
+    }
+  })
+
+  return course
+}
+
+export async function updateCourse(
+  courseId: string,
+  data: {
+    title?: string
+    description?: string
+    isPublished?: boolean
+  }
+) {
+  const session = await auth()
+  
+  if (!session?.user || session.user.role !== "TEACHER") {
+    throw new Error("No autorizado")
+  }
+
+  const course = await prisma.course.findUnique({
+    where: { id: courseId }
+  })
+
+  if (!course || course.teacherId !== session.user.id) {
+    throw new Error("Curso no encontrado o no autorizado")
+  }
+
+  const updatedCourse = await prisma.course.update({
+    where: { id: courseId },
+    data
+  })
+
+  return updatedCourse
+}
+
+export async function deleteCourse(courseId: string) {
+  const session = await auth()
+  
+  if (!session?.user || session.user.role !== "TEACHER") {
+    throw new Error("No autorizado")
+  }
+
+  const course = await prisma.course.findUnique({
+    where: { id: courseId }
+  })
+
+  if (!course || course.teacherId !== session.user.id) {
+    throw new Error("Curso no encontrado o no autorizado")
+  }
+
+  await prisma.course.delete({
+    where: { id: courseId }
+  })
+
+  return { success: true }
+}
+
+export async function getStudentAnalytics() {
+  const session = await auth()
+  
+  if (!session?.user || session.user.role !== "TEACHER") {
+    throw new Error("No autorizado")
+  }
+
+  const teacherId = session.user.id
+
+  // Get all enrollments for this teacher's courses
+  const enrollments = await prisma.enrollment.findMany({
+    where: {
+      course: {
+        teacherId
+      }
+    },
+    select: {
+      id: true,
+      userId: true,
+      courseId: true,
+      progress: true,
+      completedTopics: true,
+      enrolledAt: true,
+      studyProfile: true,
+      anxietyLevel: true,
+      averageScore: true,
+      visualScore: true,
+      auditivoScore: true,
+      kinestesicoScore: true,
+      tabSwitches: true,
+      consecutiveClicks: true,
+      missedClicks: true,
+      timePerQuestion: true,
+      idleTime: true,
+      scrollReversals: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true
+        }
+      },
+      course: {
+        select: {
+          id: true,
+          title: true
+        }
+      }
+    }
+  })
+
+  // Transform data for the analytics component
+  const students = enrollments.map(enrollment => ({
+    id: enrollment.user.id,
+    name: enrollment.user.name || enrollment.user.email,
+    avatar: enrollment.user.name 
+      ? enrollment.user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+      : enrollment.user.email.slice(0, 2).toUpperCase(),
+    profile: enrollment.studyProfile || 'Visual',
+    anxietyLevel: enrollment.anxietyLevel,
+    averageScore: enrollment.averageScore,
+    progress: enrollment.progress,
+    enrolledCourses: [enrollment.course.id],
+    profileScores: {
+      Visual: enrollment.visualScore,
+      Auditivo: enrollment.auditivoScore,
+      Kinestesico: enrollment.kinestesicoScore
+    },
+    anxietyMetrics: {
+      tabSwitches: enrollment.tabSwitches ? (enrollment.tabSwitches as number[]) : Array(10).fill(0),
+      consecutiveClicks: enrollment.consecutiveClicks ? (enrollment.consecutiveClicks as number[]) : Array(10).fill(0),
+      missedClicks: enrollment.missedClicks ? (enrollment.missedClicks as number[]) : Array(10).fill(0),
+      timePerQuestion: enrollment.timePerQuestion ? (enrollment.timePerQuestion as number[]) : Array(10).fill(0),
+      idleTime: enrollment.idleTime ? (enrollment.idleTime as number[]) : Array(10).fill(0),
+      scrollReversals: enrollment.scrollReversals ? (enrollment.scrollReversals as number[]) : Array(10).fill(0)
+    }
+  }))
+
+  // Group students by unique user ID to avoid duplicates
+  const uniqueStudents = Array.from(
+    new Map(students.map(s => [s.id, s])).values()
+  )
+
+  // Aggregate enrolled courses for each student
+  const studentMap = new Map<string, typeof students[0]>()
+  
+  enrollments.forEach(enrollment => {
+    const existing = studentMap.get(enrollment.user.id)
+    if (existing) {
+      if (!existing.enrolledCourses.includes(enrollment.course.id)) {
+        existing.enrolledCourses.push(enrollment.course.id)
+      }
+    } else {
+      const student = students.find(s => s.id === enrollment.user.id)
+      if (student) {
+        studentMap.set(enrollment.user.id, { ...student })
+      }
+    }
+  })
+
+  const finalStudents = Array.from(studentMap.values())
+
+  return {
+    students: finalStudents,
+    courses: await prisma.course.findMany({
+      where: { teacherId },
+      select: {
+        id: true,
+        title: true
+      }
+    })
+  }
+}
+
+export async function updateStudentProfile(
+  userId: string,
+  courseId: string,
+  profile: 'Visual' | 'Auditivo' | 'Kinestesico'
+) {
+  const session = await auth()
+  
+  if (!session?.user || session.user.role !== "TEACHER") {
+    throw new Error("No autorizado")
+  }
+
+  const teacherId = session.user.id
+
+  // Verify the course belongs to this teacher
+  const course = await prisma.course.findUnique({
+    where: { id: courseId }
+  })
+
+  if (!course || course.teacherId !== teacherId) {
+    throw new Error("Curso no encontrado o no autorizado")
+  }
+
+  // Update the enrollment
+  const enrollment = await prisma.enrollment.update({
+    where: {
+      userId_courseId: {
+        userId,
+        courseId
+      }
+    },
+    data: {
+      studyProfile: profile
+    }
+  })
+
+  return enrollment
+}
+
+export async function getCourseTopics(courseId: string) {
+  const session = await auth()
+  
+  if (!session?.user || session.user.role !== "TEACHER") {
+    throw new Error("No autorizado")
+  }
+
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    include: {
+      topics: {
+        orderBy: { order: 'asc' }
+      }
+    }
+  })
+
+  if (!course || course.teacherId !== session.user.id) {
+    throw new Error("Curso no encontrado o no autorizado")
+  }
+
+  return {
+    course: {
+      id: course.id,
+      title: course.title,
+      description: course.description
+    },
+    topics: course.topics
+  }
+}
+
+export async function createTopic(data: {
+  courseId: string
+  title: string
+  content: string
+  order: number
+}) {
+  const session = await auth()
+  
+  if (!session?.user || session.user.role !== "TEACHER") {
+    throw new Error("No autorizado")
+  }
+
+  const course = await prisma.course.findUnique({
+    where: { id: data.courseId }
+  })
+
+  if (!course || course.teacherId !== session.user.id) {
+    throw new Error("Curso no encontrado o no autorizado")
+  }
+
+  const topic = await prisma.topic.create({
+    data: {
+      title: data.title,
+      content: data.content,
+      order: data.order,
+      courseId: data.courseId
+    }
+  })
+
+  return topic
+}
+
+export async function updateTopic(
+  topicId: string,
+  data: {
+    title?: string
+    content?: string
+    order?: number
+  }
+) {
+  const session = await auth()
+  
+  if (!session?.user || session.user.role !== "TEACHER") {
+    throw new Error("No autorizado")
+  }
+
+  const topic = await prisma.topic.findUnique({
+    where: { id: topicId },
+    include: { course: true }
+  })
+
+  if (!topic || topic.course.teacherId !== session.user.id) {
+    throw new Error("Tema no encontrado o no autorizado")
+  }
+
+  const updatedTopic = await prisma.topic.update({
+    where: { id: topicId },
+    data
+  })
+
+  return updatedTopic
+}
+
+export async function deleteTopic(topicId: string) {
+  const session = await auth()
+  
+  if (!session?.user || session.user.role !== "TEACHER") {
+    throw new Error("No autorizado")
+  }
+
+  const topic = await prisma.topic.findUnique({
+    where: { id: topicId },
+    include: { course: true }
+  })
+
+  if (!topic || topic.course.teacherId !== session.user.id) {
+    throw new Error("Tema no encontrado o no autorizado")
+  }
+
+  await prisma.topic.delete({
+    where: { id: topicId }
+  })
+
+  return { success: true }
+}

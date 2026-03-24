@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { getStudentEnrolledCoursesWithProgress } from "@/lib/actions/enrollments"
+import { prisma } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -18,7 +18,26 @@ export default async function StudentCoursesPage() {
     redirect("/dashboard")
   }
 
-  const enrolledCourses = await getStudentEnrolledCoursesWithProgress()
+  const enrolledCourses = await prisma.enrollment.findMany({
+    where: { userId: session.user.id },
+    include: {
+      course: {
+        include: {
+          teacher: {
+            select: {
+              id: true,
+              name: true,
+              image: true
+            }
+          },
+          _count: {
+            select: { topics: true }
+          }
+        }
+      }
+    },
+    orderBy: { enrolledAt: "desc" }
+  })
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -56,7 +75,7 @@ export default async function StudentCoursesPage() {
                       <BookOpen className="h-5 w-5 text-primary" />
                     </div>
                     <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                      {course.topicsCount} temas
+                      {course._count.topics} temas
                     </span>
                   </div>
                   <CardTitle className="mt-3 font-display text-base line-clamp-2">

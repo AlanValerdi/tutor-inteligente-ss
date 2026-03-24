@@ -6,12 +6,23 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { registerSchema, type RegisterInput } from "@/lib/validations/auth"
-import { register as registerUser } from "@/lib/actions/auth"
 import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+
+function getRedirectUrl(role?: string): string {
+  switch (role) {
+    case "TEACHER":
+      return "/teacher"
+    case "ADMIN":
+      return "/admin"
+    case "STUDENT":
+    default:
+      return "/student"
+  }
+}
 
 export function RegisterForm() {
   const router = useRouter()
@@ -31,21 +42,31 @@ export function RegisterForm() {
     setError(null)
 
     try {
-      await registerUser(data)
-      
-      // Auto login after registration
-      const result = await signIn("credentials", {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Error al registrar")
+      }
+
+      const signInResult = await signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false,
       })
 
-      if (result && "error" in result && result.error) {
-        setError("Error al iniciar sesión después del registro")
-      } else {
-        router.push("/dashboard")
-        router.refresh()
+      if (signInResult && "error" in signInResult && signInResult.error) {
+        throw new Error("Error al iniciar sesión después del registro")
       }
+
+      const redirectUrl = getRedirectUrl(result.role)
+      router.push(redirectUrl)
+      router.refresh()
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message)

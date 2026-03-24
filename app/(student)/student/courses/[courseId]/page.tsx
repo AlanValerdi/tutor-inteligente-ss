@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { getCourseById } from "@/lib/actions/courses"
-import { getEnrollmentProgress } from "@/lib/actions/enrollments"
+import { prisma } from "@/lib/db"
 import { CourseViewAdapter } from "@/components/dashboard/course-view-adapter"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
@@ -25,14 +24,53 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
   }
 
   // Verify enrollment
-  const enrollment = await getEnrollmentProgress(params.courseId)
+  const enrollment = await prisma.enrollment.findUnique({
+    where: {
+      userId_courseId: {
+        userId: session.user.id,
+        courseId: params.courseId
+      }
+    }
+  })
+  
   if (!enrollment) {
     redirect("/student/courses") // User not enrolled
   }
 
-  const course = await getCourseById(params.courseId)
+  // Get course with topics
+  const course = await prisma.course.findUnique({
+    where: { id: params.courseId },
+    include: {
+      teacher: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true
+        }
+      },
+      topics: {
+        orderBy: { order: "asc" }
+      }
+    }
+  })
+
   if (!course) {
     redirect("/student/courses") // Course not found
+  }
+
+  // Transform data for adapter
+  const courseData = {
+    id: course.id,
+    title: course.title,
+    description: course.description,
+    topics: course.topics.map(topic => ({
+      id: topic.id,
+      title: topic.title,
+      content: topic.content,
+      order: topic.order
+    })),
+    teacher: course.teacher
   }
 
   return (
@@ -52,7 +90,7 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
       {/* Course content */}
       <div className="flex-1 overflow-hidden">
         <CourseViewAdapter
-          course={course}
+          course={courseData}
           onBack={() => {}}
           onSelectTopic={(topicId) => {
             // Navigate to topic page

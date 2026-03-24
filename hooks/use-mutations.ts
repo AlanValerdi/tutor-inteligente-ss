@@ -1,6 +1,5 @@
 import useSWRMutation from 'swr/mutation'
 import { mutate } from 'swr'
-import { enrollInCourse as enrollInCourseAction } from '@/lib/actions/enrollments'
 import { cacheKeys, invalidateRelated } from '@/lib/swr-config'
 import { toast } from 'sonner'
 import type { 
@@ -27,14 +26,24 @@ interface ProgressMutationData {
  */
 export function useOptimisticEnrollment() {
   const mutation = useSWRMutation(
-    'enrollment-action',
-    async (key: string, { arg }: { arg: EnrollmentMutationData }) => {
+    '/api/enrollments',
+    async (url: string, { arg }: { arg: EnrollmentMutationData }) => {
       const { courseId, enrollKey } = arg
       
       try {
-        // Call the actual server action
-        await enrollInCourseAction({ courseId, enrollKey })
-        return { success: true, courseId }
+        // Call the API endpoint
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courseId, enrollKey })
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Error al inscribirse')
+        }
+
+        return response.json()
       } catch (error) {
         throw error
       }

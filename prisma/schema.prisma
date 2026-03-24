@@ -12,6 +12,18 @@ enum Role {
   ADMIN
 }
 
+enum StudyProfile {
+  Visual
+  Auditivo
+  Kinestesico
+}
+
+enum AnxietyLevel {
+  Bajo
+  Medio
+  Alto
+}
+
 model User {
   id            String        @id @default(cuid())
   email         String        @unique
@@ -77,13 +89,33 @@ model Course {
 }
 
 model Enrollment {
-  id         String   @id @default(cuid())
-  userId     String
-  courseId   String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  progress   Int      @default(0)
-  enrolledAt DateTime @default(now())
+  id                String        @id @default(cuid())
+  userId            String
+  courseId          String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course            Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress          Int           @default(0)
+  completedTopics   Int           @default(0)
+  lastAccessedAt    DateTime?
+  enrolledAt        DateTime      @default(now())
+  
+  // Learning profile data
+  studyProfile      StudyProfile?
+  anxietyLevel      AnxietyLevel  @default(Bajo)
+  averageScore      Int           @default(0)
+  
+  // Profile scores (0-100 for each learning style)
+  visualScore       Int           @default(0)
+  auditivoScore     Int           @default(0)
+  kinestesicoScore  Int           @default(0)
+  
+  // Anxiety metrics (stored as JSON arrays for last 10 sessions)
+  tabSwitches       Json?         // Array of tab switch counts per session
+  consecutiveClicks Json?         // Array of consecutive click counts
+  missedClicks      Json?         // Array of missed click counts
+  timePerQuestion   Json?         // Array of avg seconds per question
+  idleTime          Json?         // Array of idle time in seconds
+  scrollReversals   Json?         // Array of scroll reversal counts
 
   @@unique([userId, courseId])
 }

@@ -2,7 +2,7 @@
 
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
 import { useState } from "react"
-import { handleSignOut } from "@/lib/actions/auth"
+import { signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
 interface AdminLayoutProps {
@@ -17,7 +17,7 @@ export function AdminLayoutClient({ children, adminName }: AdminLayoutProps) {
 
   const handleExit = async () => {
     try {
-      await handleSignOut()
+      await signOut({ redirect: false })
       router.push("/login")
     } catch (error) {
       console.error("Error signing out:", error)

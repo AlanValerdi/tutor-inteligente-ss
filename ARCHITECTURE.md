@@ -1,58 +1,161 @@
 # Tutor Inteligente SS - Architecture Plan
 
-> **Status**: Pending Implementation  
-> **Last Updated**: 2026-03-16
+> **Status**: Phase 3 Complete - SWR Implementation  
+> **Last Updated**: 2026-03-18
 
 ---
 
 ## 1. Dependencies
 
-### To Install
-- [ ] `@auth/prisma-adapter` - Auth.js Prisma adapter
-- [ ] `next-auth@beta` - Auth.js v5
-- [ ] `prisma` - ORM (dev dependency)
-- [ ] `@prisma/client` - Prisma client (production)
-
-### Current Dependencies (Already Installed)
-- Next.js 16
+### Installed Dependencies
+- Next.js 16 (with Turbopack)
 - React 19
-- Zod
-- react-hook-form
-- @hookform/resolvers
+- SWR v2.4.1 - Data fetching and caching
+- Zod - Schema validation
+- react-hook-form + @hookform/resolvers
 - shadcn/ui components
 - Tailwind CSS
+- Prisma v7 - ORM
+- Auth.js v5 (beta) - Authentication
 
 ---
 
-## 2. Database Schema (Prisma + PostgreSQL)
+## 2. Architecture Overview
+
+### Current Architecture: API Routes + SWR
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│                 │     │                 │     │                 │
+│   React UI      │────▶│    SWR Hooks    │────▶│   API Routes    │
+│   Components    │◀────│   (Client)       │◀────│   (Next.js)     │
+│                 │     │                 │     │                 │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+                               │
+                               │ Cache
+                               ▼
+                        ┌─────────────────┐
+                        │                 │
+                        │  SWR Cache      │
+                        │  (Optimistic)   │
+                        │                 │
+                        └─────────────────┘
+```
+
+### Key Principles
+
+1. **No Server Actions** - All mutations go through API Routes
+2. **SWR for All Data Fetching** - Automatic caching, revalidation, and optimistic updates
+3. **RESTful API Design** - Standard HTTP methods and status codes
+4. **Type-Safe APIs** - Shared types between client and server
+
+---
+
+## 3. Project Structure
+
+```
+app/
+├── (auth)/                          # Authentication routes
+│   ├── login/
+│   │   └── page.tsx                 # Login page
+│   ├── register/
+│   │   └── page.tsx                 # Register page
+│   └── layout.tsx                   # Auth layout
+│
+├── (dashboard)/                     # Protected routes
+│   ├── student/
+│   │   ├── courses/                 # Student courses
+│   │   └── page.tsx                 # Student dashboard
+│   ├── teacher/
+│   │   ├── courses/                 # Teacher course management
+│   │   └── page.tsx                 # Teacher dashboard
+│   ├── admin/
+│   │   └── page.tsx                 # Admin dashboard
+│   └── layout.tsx                   # Dashboard layout
+│
+├── api/                             # API Routes
+│   ├── auth/
+│   │   └── [...nextauth]/
+│   │       └── route.ts             # Auth.js handler
+│   │
+│   ├── courses/
+│   │   ├── route.ts                 # GET (list), POST (create)
+│   │   └── published/
+│   │       └── route.ts             # GET (public courses)
+│   │
+│   ├── enrollments/
+│   │   └── route.ts                 # POST (enroll), GET (user enrollments)
+│   │
+│   ├── student/
+│   │   ├── dashboard-stats/
+│   │   │   └── route.ts             # GET (student stats)
+│   │   └── enrolled-courses/
+│   │       └── route.ts             # GET (enrolled courses with progress)
+│   │
+│   └── topics/
+│       └── route.ts                 # GET, POST, PUT, DELETE
+│
+├── layout.tsx                       # Root layout
+└── page.tsx                         # Landing page
+
+lib/
+├── db.ts                            # Prisma client singleton
+├── auth.ts                          # Auth.js configuration
+├── admin.ts                         # Admin email helpers
+├── swr-config.ts                    # SWR global configuration
+├── utils.ts                         # Utility functions
+└── validations/                     # Zod schemas
+    ├── auth.ts
+    ├── course.ts
+    ├── enrollment.ts
+    └── topic.ts
+
+types/
+├── swr.ts                           # SWR data types and responses
+└── api.ts                           # API request/response types
+
+hooks/
+├── use-swr-utils.ts                 # Base SWR utilities
+├── use-dashboard-data.ts            # Dashboard data hooks
+└── use-mutations.ts                 # Optimistic mutation hooks
+
+components/
+├── auth/                           # Auth components
+│   ├── login-form.tsx
+│   └── register-form.tsx
+├── ui/                             # shadcn/ui components
+├── dashboard/                       # Dashboard components
+│   ├── student-portal.tsx          # Main student dashboard
+│   ├── student-dashboard.tsx
+│   ├── course-explorer.tsx
+│   ├── course-view-adapter.tsx
+│   ├── topic-detail-adapter.tsx
+│   └── dashboard-skeletons.tsx
+├── debug/
+│   └── swr-debug-panel.tsx          # Development debugging
+└── providers/
+    └── swr-provider.tsx             # SWR provider component
+
+prisma/
+├── schema.prisma                    # Database schema
+└── seed.ts                         # Database seeder (future)
+```
+
+---
+
+## 4. Database Schema (Prisma)
 
 ### Models
 
 ```prisma
-// schema.prisma outline (Prisma v7)
-
-datasource db {
-  provider = "postgresql"
-}
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-enum Role {
-  STUDENT
-  TEACHER
-  ADMIN
-}
-
 model User {
   id           String        @id @default(cuid())
   email        String        @unique
-  emailVerified DateTime?    // Required for Auth.js
+  emailVerified DateTime?
   name         String?
   image        String?
   role         Role          @default(STUDENT)
-  password     String?       // Nullable - only for email auth
+  password     String?
   accounts     Account[]
   sessions     Session[]
   courses      Course[]      @relation("TeacherCourses")
@@ -61,45 +164,11 @@ model User {
   updatedAt    DateTime      @updatedAt
 }
 
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
 model Course {
   id           String        @id @default(cuid())
   title        String
   description  String?
-  enrollKey    String        @unique  // One key per course for student enrollment
+  enrollKey    String        @unique
   isPublished  Boolean       @default(false)
   teacherId    String
   teacher      User          @relation("TeacherCourses", fields: [teacherId], references: [id])
@@ -116,6 +185,8 @@ model Enrollment {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   progress    Int       @default(0)
+  completedTopics Int   @default(0)
+  lastAccessedAt DateTime?
   enrolledAt  DateTime  @default(now())
 
   @@unique([userId, courseId])
@@ -124,297 +195,417 @@ model Enrollment {
 model Topic {
   id        String   @id @default(cuid())
   title     String
-  content   String   @db.Text
+  description String?
+  position  Int
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  order     Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-```
 
-### Schema Notes
-- `enrollKey` is unique per course - students enter this key to enroll
-- `role` defaults to STUDENT on registration
-- Admin emails will be checked at registration/login time (not in schema)
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+```
 
 ---
 
-## 3. Authentication (Auth.js v5)
+## 5. API Routes Pattern
 
-### Configuration Files
+### RESTful Endpoints
 
-```
-lib/
-├── db.ts                # Prisma client singleton (with v7 adapter)
-├── auth.ts              # Auth.js main config
-└── admin.ts             # Admin email helpers
-```
-
-### Prisma v7 Configuration
-- **prisma.config.ts** - Contains database URL configuration for migrations
-- **lib/db.ts** - Uses PostgreSQL adapter for database connections
-- **No url in schema** - Database URL moved to prisma.config.ts
-
-### Auth Features
-- **Google OAuth** for social login
-- **Email/Password** for admin panel access
-- **Role-based sessions** - session includes user role
-
-### Admin Access Control
+#### Courses API
 
 ```typescript
-// lib/admin.ts
-const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(",") ?? []
+// app/api/courses/route.ts
+// GET /api/courses - List courses (with auth)
+// POST /api/courses - Create course (teacher only)
 
-export function isAdminEmail(email: string): boolean {
-  return ADMIN_EMAILS.includes(email)
-}
+export async function GET(request: Request) {
+  const session = await auth()
+  if (!session?.user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 })
+  }
 
-export async function getUserRole(email: string): Promise<Role> {
-  if (isAdminEmail(email)) return "ADMIN"
-  // Check if user is teacher (from database)
-  const user = await prisma.user.findUnique({ where: { email } })
-  return user?.role ?? "STUDENT"
+  const courses = await prisma.course.findMany({
+    where: { teacherId: session.user.id },
+    include: {
+      _count: { select: { topics: true, enrollments: true } }
+    }
+  })
+
+  return Response.json(courses)
 }
 ```
 
-### Environment Variables Required
+#### Enrollments API
+
+```typescript
+// app/api/enrollments/route.ts
+// POST /api/enrollments - Enroll in course
+// GET /api/enrollments - Get user enrollments
+
+export async function POST(request: Request) {
+  const session = await auth()
+  if (!session?.user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const { courseId, enrollKey } = await request.json()
+
+  const course = await prisma.course.findUnique({
+    where: { id: courseId }
+  })
+
+  if (!course || course.enrollKey !== enrollKey) {
+    return Response.json({ error: "Invalid enrollment key" }, { status: 400 })
+  }
+
+  const enrollment = await prisma.enrollment.create({
+    data: {
+      userId: session.user.id,
+      courseId
+    }
+  })
+
+  return Response.json(enrollment, { status: 201 })
+}
 ```
+
+---
+
+## 6. SWR Implementation
+
+### Global Configuration
+
+```typescript
+// lib/swr-config.ts
+import { SWRConfiguration } from 'swr'
+
+export const swrConfig: SWRConfiguration = {
+  revalidateOnFocus: true,
+  revalidateOnReconnect: true,
+  refreshInterval: 0, // Disable polling by default
+  errorRetryCount: 3,
+  onError: (error) => {
+    console.error('SWR Error:', error)
+    toast.error('Error al cargar datos')
+  }
+}
+
+export const cacheKeys = {
+  studentDashboard: () => '/api/student/dashboard-stats',
+  studentCourses: () => '/api/student/enrolled-courses',
+  publishedCourses: () => '/api/courses/published',
+  course: (id: string) => `/api/courses/${id}`,
+  courseTopics: (id: string) => `/api/courses/${id}/topics`
+}
+```
+
+### SWR Provider
+
+```typescript
+// components/providers/swr-provider.tsx
+"use client"
+
+import { SWRConfig } from "swr"
+import { swrConfig } from "@/lib/swr-config"
+import { Toaster } from "sonner"
+
+export function SWRProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <SWRConfig value={swrConfig}>
+      {children}
+      <Toaster position="bottom-right" richColors />
+    </SWRConfig>
+  )
+}
+```
+
+### Data Hooks
+
+```typescript
+// hooks/use-dashboard-data.ts
+"use client"
+
+import useSWR from "swr"
+import { cacheKeys } from "@/lib/swr-config"
+
+const fetcher = (url: string) => fetch(url).then(res => res.json())
+
+export function useDashboardData() {
+  const { data, error, isLoading, mutate } = useSWR(
+    cacheKeys.studentDashboard(),
+    fetcher,
+    {
+      refreshInterval: 5 * 60 * 1000, // 5 minutes
+      revalidateOnFocus: true
+    }
+  )
+
+  return {
+    stats: data,
+    isLoading,
+    hasError: !!error,
+    error,
+    refresh: () => mutate()
+  }
+}
+```
+
+### Optimistic Mutations
+
+```typescript
+// hooks/use-mutations.ts
+import useSWRMutation from 'swr/mutation'
+import { mutate } from 'swr'
+
+export function useMutations() {
+  const enroll = useSWRMutation(
+    '/api/enrollments',
+    async (url: string, { arg }: { arg: EnrollmentData }) => {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(arg)
+      })
+      
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.message)
+      }
+      
+      return res.json()
+    },
+    {
+      onSuccess: () => {
+        mutate(cacheKeys.studentCourses())
+        mutate(cacheKeys.studentDashboard())
+        toast.success('¡Inscripción exitosa!')
+      },
+      onError: (error) => {
+        toast.error(error.message)
+      }
+    }
+  )
+
+  return { enroll: enroll.trigger, isEnrolling: enroll.isMutating }
+}
+```
+
+---
+
+## 7. Authentication (Auth.js v5)
+
+### Configuration
+
+```typescript
+// lib/auth.ts
+import NextAuth from "next-auth"
+import Google from "next-auth/providers/google"
+import { PrismaAdapter } from "@auth/prisma-adapter"
+import { prisma } from "@/lib/db"
+import Credentials from "next-auth/providers/credentials"
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    Google,
+    Credentials({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        // Email/password auth logic
+      }
+    })
+  ],
+  session: { strategy: "jwt" },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role
+        token.id = user.id
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.role = token.role
+        session.user.id = token.id
+      }
+      return session
+    }
+  }
+})
+```
+
+### API Route Handler
+
+```typescript
+// app/api/auth/[...nextauth]/route.ts
+import { handlers } from "@/lib/auth"
+
+export const { GET, POST } = handlers
+```
+
+---
+
+## 8. Implementation Status
+
+### ✅ Phase 1: SWR Foundation (COMPLETED)
+- [x] Install SWR v2.4.1
+- [x] Create SWR configuration (`lib/swr-config.ts`)
+- [x] Build SWR provider component
+- [x] Create TypeScript interfaces for SWR responses
+- [x] Build utility hooks for different data patterns
+
+### ✅ Phase 2: Dashboard Optimization (COMPLETED)
+- [x] Create specialized dashboard hooks
+- [x] Replace manual state management with SWR
+- [x] Build intelligent loading skeletons
+- [x] Add SWR debug panel for development
+
+### ✅ Phase 3: Optimistic Updates & Mutations (COMPLETED)
+- [x] Create optimistic mutation hooks
+- [x] Integrate mutations into UI components
+- [x] Add loading states during mutations
+- [x] Verify all functionality works
+
+### 🔄 Phase 4: Hybrid Architecture (API Routes + Server Actions) (IN PROGRESS)
+- [x] Decide architecture based on use case (pragmatic approach)
+- [x] Remove old Server Actions
+- [x] Create `/dashboard` hub with role-based redirects
+- [x] Update login/register forms with proper redirects
+- [ ] Implement teacher course management
+- [ ] Add real-time features if needed
+
+### ✅ Teacher Dashboard Implementation (COMPLETED)
+- [x] Create teacher Server Actions (`lib/actions/teacher.ts`)
+  - `getTeacherDashboardData()` - Fetch courses and stats
+  - `createCourse()`, `updateCourse()`, `deleteCourse()`
+- [x] Build TeacherStats component
+- [x] Build TeacherCoursesList component
+- [x] Connect dashboard page with real data
+
+### 📊 Architecture Decision Matrix
+
+| Feature | Solution | Reason |
+|---------|----------|--------|
+| Teacher Dashboard (read) | **Server Actions** | SSR, no extra endpoint |
+| Student Enrollment (mutation) | **API Routes + SWR** | Optimistic updates, better UX |
+| User Registration | **API Route** | Immediate feedback needed |
+| Role-based redirects | **Server Component** | Check session, redirect |
+
+---
+
+## 9. Migration Plan: Server Actions → API Routes
+
+### Files to Delete
+- `lib/actions/` (entire directory)
+
+### Files to Create/Update
+- `app/api/auth/[...nextauth]/route.ts` ✅ Exists
+- `app/api/courses/route.ts` - Create/Update
+- `app/api/courses/published/route.ts` ✅ Exists
+- `app/api/courses/[id]/route.ts` - Create
+- `app/api/enrollments/route.ts` - Create
+- `app/api/topics/route.ts` - Create/Update
+- `app/api/student/dashboard-stats/route.ts` ✅ Exists
+- `app/api/student/enrolled-courses/route.ts` ✅ Exists
+
+### Components to Update
+- `components/auth/register-form.tsx` - Use API route
+- `app/(student)/student/courses/page.tsx` - Use SWR hook
+- `app/(student)/student/courses/[courseId]/page.tsx` - Use SWR hook
+- `components/teacher/teacher-layout-client.tsx` - Update logout
+- `components/admin/admin-layout-client.tsx` - Update logout
+- `components/dashboard/student-portal-wrapper.tsx` - Update logout
+
+---
+
+## 10. Environment Variables
+
+```bash
+# Database
 DATABASE_URL="postgresql://..."
+
+# Auth.js
 AUTH_SECRET="generate-with-openssl"
+AUTH_URL="http://localhost:3000"
+
+# OAuth (if using Google)
 GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
-NEXTAUTH_URL="http://localhost:3000"
+
+# Admin
 ADMIN_EMAILS="admin@example.com,another@example.com"
 ```
 
 ---
 
-## 4. Project Structure
+## 11. Notes & Decisions
 
-```
-app/
-├── (auth)/                    # Authentication routes
-│   ├── login/
-│   │   └── page.tsx
-│   ├── register/
-│   │   └── page.tsx
-│   └── layout.tsx
-├── (dashboard)/               # Protected routes
-│   ├── student/
-│   │   ├── courses/
-│   │   ├── progress/
-│   │   └── page.tsx
-│   ├── teacher/
-│   │   ├── courses/
-│   │   ├── create/
-│   │   └── page.tsx
-│   ├── admin/
-│   │   ├── users/
-│   │   └── page.tsx
-│   └── layout.tsx
-├── api/
-│   └── auth/
-│       └── [...nextauth]/
-│           └── route.ts
-├── layout.tsx
-└── page.tsx
-lib/
-├── db.ts                      # Prisma client singleton (v7 with adapter)
-├── auth.ts                    # Auth.js config
-├── admin.ts                   # Admin helpers
-├── utils.ts                   # Utility functions (existing)
-├── actions/                   # Server actions
-│   ├── auth.ts                # Auth actions (login, register)
-│   ├── courses.ts             # Course CRUD
-│   ├── enrollments.ts         # Enrollment actions
-│   └── topics.ts              # Topic CRUD
-└── validations/               # Zod schemas
-    ├── auth.ts
-    ├── course.ts
-    └── enrollment.ts
-components/
-├── auth/                      # Auth components
-│   ├── login-form.tsx
-│   └── register-form.tsx
-├── ui/                        # shadcn/ui (existing)
-└── dashboard/                 # Dashboard components (existing lms/)
-prisma/
-├── schema.prisma              # Schema without URL (Prisma v7)
-└── seed.ts                    # (future - not needed now)
-prisma.config.ts               # Prisma v7 configuration file
-.env                           # Environment variables
-.env.example                   # Template
-```
+### Architecture Decisions
+
+1. **API Routes over Server Actions**
+   - Better interoperability (can be called from anywhere)
+   - Standard HTTP semantics
+   - Easier to test and debug
+   - SWR provides caching/optimistic updates
+
+2. **SWR over React Query**
+   - Simpler API for Next.js
+   - Built-in SSR support
+   - Stable with Next.js 16
+
+3. **Optimistic Updates**
+   - Instant UI feedback
+   - Automatic rollback on errors
+   - Better user experience
+
+### Security Notes
+
+- All API routes validate session with `auth()`
+- Role-based access control in API routes
+- Enrollment keys stored in plain text (can be hashed later)
+- Admin emails controlled via environment variable
+
+### Performance Goals
+
+- **80% reduction** in API calls (via SWR caching)
+- **95% faster** cached data loading
+- **Instant** UI updates for mutations
+- **Automatic** background revalidation
 
 ---
 
-## 5. Server Actions Pattern
+## 12. Next Steps
 
-### Example Structure
+### Immediate (This Session)
+1. ✅ Remove `lib/actions/` directory
+2. ✅ Update ARCHITECTURE.md
+3. Create missing API routes
+4. Update components to use API routes
+5. Test end-to-end flow
 
-```typescript
-// lib/actions/courses.ts
-"use server"
+### Short Term
+- Add proper error boundaries
+- Implement loading skeletons for all views
+- Add pagination to course lists
+- Create teacher course management UI
 
-import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/db"
-import { createCourseSchema } from "@/lib/validations/course"
-import { revalidatePath } from "next/cache"
-
-export async function createCourse(data: CreateCourseInput) {
-  const session = await auth()
-  if (!session?.user || session.user.role !== "TEACHER") {
-    throw new Error("Unauthorized")
-  }
-
-  const validated = createCourseSchema.parse(data)
-  
-  const course = await prisma.course.create({
-    data: {
-      ...validated,
-      teacherId: session.user.id,
-    },
-  })
-
-  revalidatePath("/teacher/courses")
-  return course
-}
-```
+### Long Term
+- Add real-time notifications
+- Implement file uploads (course images)
+- Add email notifications
+- Performance monitoring
 
 ---
 
-## 6. Route Protection
-
-### Middleware Pattern
-```typescript
-// middleware.ts
-import { auth } from "@/lib/auth"
-
-export default auth((req) => {
-  const isLoggedIn = !!req.auth
-  const isOnDashboard = req.nextUrl.pathname.startsWith("/dashboard")
-  
-  if (isOnDashboard && !isLoggedIn) {
-    return Response.redirect(new URL("/login", req.nextUrl))
-  }
-})
-
-export const config = {
-  matcher: ["/dashboard/:path*"],
-}
-```
-
-### Server-Side Protection
-```typescript
-// In server actions or page components
-const session = await auth()
-if (!session?.user || session.user.role !== "ADMIN") {
-  throw new Error("Unauthorized")
-}
-```
-
----
-
-## 7. Enrollment Flow
-
-### Student Enrollment
-1. Student views available courses (public list)
-2. Enters course enrollment key
-3. Server validates key against `Course.enrollKey`
-4. If valid, creates `Enrollment` record
-5. Student gains access to course content
-
-```typescript
-// lib/actions/enrollments.ts
-export async function enrollInCourse(courseId: string, key: string) {
-  const session = await auth()
-  if (!session?.user) throw new Error("Must be logged in")
-
-  const course = await prisma.course.findUnique({ 
-    where: { id: courseId } 
-  })
-  
-  if (!course || course.enrollKey !== key) {
-    throw new Error("Invalid enrollment key")
-  }
-
-  return prisma.enrollment.create({
-    data: {
-      userId: session.user.id,
-      courseId,
-    },
-  })
-}
-```
-
----
-
-## 8. Implementation Steps
-
-### Step 1: Install Dependencies
-- [x] Install Prisma and Auth.js packages
-
-### Step 2: Database Setup
-- [x] Create Prisma schema
-- [x] Upgrade to Prisma v7 (removed url from schema)
-- [x] Create prisma.config.ts for v7 configuration
-- [x] Update PrismaClient to use PostgreSQL adapter
-- [x] Generate Prisma client
-- [x] Set up environment variables
-
-### Step 3: Auth Configuration
-- [x] Create lib/db.ts (Prisma singleton)
-- [x] Create lib/auth.ts (Auth.js config)
-- [x] Create lib/admin.ts (Admin helpers)
-- [x] Set up API route handler
-
-### Step 4: Server Actions
-- [x] Create auth actions (login/register)
-- [x] Create course actions
-- [x] Create enrollment actions
-
-### Step 5: Protected Routes
-- [x] Create (auth) route group with login/register pages
-- [x] Create (dashboard) route group
-- [ ] Add middleware for protection (optional - using layout redirect)
-- [x] Create role-based page components
-
-### Step 6: UI Components
-- [x] Create auth forms (login/register)
-- [x] Integrate with server actions
-
----
-
-## 9. Current Implementation Status
-
-| Step | Status |
-|------|--------|
-| Install Dependencies | ✅ Complete |
-| Database Setup | ✅ Complete |
-| Auth Configuration | ✅ Complete |
-| Server Actions | ✅ Complete |
-| Protected Routes | ✅ Complete |
-| UI Components | ✅ Complete |
-
----
-
-## 10. Next Steps (Pending)
-
-- [ ] Set up PostgreSQL database
-- [ ] Configure Google OAuth credentials in .env
-- [ ] Add admin emails to ADMIN_EMAILS in .env
-- [ ] Run database migration: `pnpm prisma migrate dev`
-- [ ] Create teacher course management pages
-- [ ] Create student course browsing/enrollment
-- [ ] Add middleware for route protection
-
----
-
-## 10. Notes & Decisions
-
-- **No email service** for password reset (not a functional requirement yet)
-- **No demo data** - will add later after interface requirements are finalized
-- **Enrollment keys** are teacher-generated, stored in plain text (can be hashed later if needed)
-- **Admin emails** controlled via environment variable `ADMIN_EMAILS`
+**Last Updated**: 2026-03-18  
+**Status**: Migrating to API Routes architecture

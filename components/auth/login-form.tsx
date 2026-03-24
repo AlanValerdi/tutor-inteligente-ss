@@ -12,6 +12,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
+function getRedirectUrl(role?: string): string {
+  switch (role) {
+    case "TEACHER":
+      return "/teacher"
+    case "ADMIN":
+      return "/admin"
+    case "STUDENT":
+    default:
+      return "/student"
+  }
+}
+
 export function LoginForm() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
@@ -35,10 +47,9 @@ export function LoginForm() {
       redirect: false,
     })
 
-    setIsLoading(false)
-
     if (result?.error) {
       setError("Email o contraseña incorrectos")
+      setIsLoading(false)
     } else {
       router.push("/student")
       router.refresh()
