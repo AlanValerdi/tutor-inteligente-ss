@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-type StudentView = "dashboard" | "course" | "topic" | "browse"
+type StudentView = "dashboard" | "course" | "topic" | "browse" | "enroll"
 
 interface StudentSidebarProps {
   currentView: StudentView

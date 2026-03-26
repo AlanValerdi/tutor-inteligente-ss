@@ -67,7 +67,7 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
     topics: course.topics.map(topic => ({
       id: topic.id,
       title: topic.title,
-      content: topic.content,
+      content: topic.content as any,
       order: topic.order
     })),
     teacher: course.teacher

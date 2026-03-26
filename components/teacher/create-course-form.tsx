@@ -25,8 +25,8 @@ export function CreateCourseForm() {
   const generateEnrollKey = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     let key = ""
-    for (let i = 0; i < 12; i++) {
-      if (i === 4 || i === 8) {
+    for (let i = 0; i < 14; i++) {
+      if (i === 4 || i === 9) {
         key += "-"
       } else {
         key += chars.charAt(Math.floor(Math.random() * chars.length))

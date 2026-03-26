@@ -10,7 +10,7 @@ export default async function CourseTopicsPage({ params }: { params: Promise<{ i
     return (
       <TopicCreatorData 
         course={data.course}
-        topics={data.topics}
+        topics={data.topics.map(t => ({ ...t, content: t.content as any }))}
       />
     )
   } catch (error) {

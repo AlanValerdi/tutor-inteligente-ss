@@ -105,7 +105,7 @@ export function StudentAnalyticsData({ students, courses }: StudentAnalyticsData
           return dir * (a.progress - b.progress)
         case "anxiety": {
           const order: Record<AnxietyLevel, number> = { Bajo: 0, Medio: 1, Alto: 2 }
-          return dir * (order[a.anxietyLevel] - order[b.anxietyLevel])
+          return dir * (order[a.anxietyLevel as AnxietyLevel] - order[b.anxietyLevel as AnxietyLevel])
         }
         default:
           return 0
@@ -249,7 +249,7 @@ export function StudentAnalyticsData({ students, courses }: StudentAnalyticsData
                   {filteredStudents.map((student) => {
                     const currentProfile = getStudentProfile(student)
                     const ProfileIcon = profileIcons[currentProfile]
-                    const anxiety = anxietyColors[student.anxietyLevel]
+                    const anxiety = anxietyColors[student.anxietyLevel as AnxietyLevel]
 
                     return (
                       <tr key={student.id} className="border-b border-border last:border-0 transition-colors hover:bg-muted/30">

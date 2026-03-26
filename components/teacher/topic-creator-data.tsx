@@ -29,7 +29,7 @@ interface TopicCreatorDataProps {
   topics: {
     id: string
     title: string
-    content: string
+    content: any
     order: number
   }[]
 }
@@ -80,7 +80,7 @@ export function TopicCreatorData({ course, topics: initialTopics }: TopicCreator
   const handleEditStart = (topic: typeof initialTopics[0]) => {
     setEditingTopicId(topic.id)
     setEditTitle(topic.title)
-    setEditContent(topic.content)
+    setEditContent(typeof topic.content === 'string' ? topic.content : JSON.stringify(topic.content))
   }
 
   const handleEditCancel = () => {
@@ -205,10 +205,18 @@ export function TopicCreatorData({ course, topics: initialTopics }: TopicCreator
                             <div className="flex-1">
                               <p className="font-medium text-sm">{topic.order}. {topic.title}</p>
                               <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                                {topic.content}
+                                {typeof topic.content === 'string' ? topic.content : "Contenido estructurado por bloques"}
                               </p>
                             </div>
                             <div className="flex gap-1">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => router.push(`/teacher/topics/${topic.id}/quizzes`)}
+                              >
+                                <FileText className="h-3 w-3 mr-1" />
+                                Cuestionarios
+                              </Button>
                               <Button 
                                 variant="ghost" 
                                 size="sm"
@@ -356,28 +364,6 @@ export function TopicCreatorData({ course, topics: initialTopics }: TopicCreator
                       Subir PDF (Próximamente)
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="mt-6 border-0 shadow-sm">
-              <CardHeader>
-                <CardTitle className="font-display text-lg">Cuestionario del Tema</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Agrega preguntas de cuestionario que todos los estudiantes deben aprobar para continuar.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
-                  <Plus className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm font-medium text-card-foreground mb-1">Agregar Preguntas</p>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    Crea preguntas de opcion multiple para este tema (Próximamente).
-                  </p>
-                  <Button variant="outline" size="sm" className="gap-2" disabled>
-                    <Plus className="h-3.5 w-3.5" />
-                    Agregar Pregunta
-                  </Button>
                 </div>
               </CardContent>
             </Card>

@@ -36,6 +36,7 @@ model User {
   sessions      Session[]
   courses       Course[]      @relation("TeacherCourses")
   enrollments   Enrollment[]
+  quizAttempts  QuizAttempt[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -123,10 +124,75 @@ model Enrollment {
 model Topic {
   id        String   @id @default(cuid())
   title     String
-  content   String   @db.Text
+  content   Json
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  quizzes   Quiz[]
   order     Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+}
+
+model Quiz {
+  id              String         @id @default(cuid())
+  title           String
+  description     String?
+  topicId         String
+  topic           Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  questions       Question[]
+  attempts        QuizAttempt[]
+  passingScore    Int            @default(70) // Percentage required to pass
+  maxAttempts     Int?           // null = unlimited attempts
+  timeLimit       Int?           // Time limit in minutes (null = no limit)
+  shuffleQuestions Boolean       @default(false)
+  isPublished     Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Question {
+  id              String         @id @default(cuid())
+  quizId          String
+  quiz            Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  type            QuestionType   @default(MULTIPLE_CHOICE)
+  questionText    String         @db.Text
+  imageUrl        String?        // Optional image for visual learners
+  order           Int
+  points          Int            @default(1)
+  // For MULTIPLE_CHOICE: store as JSON array of {text, isCorrect}
+  // For TRUE_FALSE: store as JSON {correctAnswer: true/false}
+  // For SHORT_ANSWER: store as JSON {acceptedAnswers: []}
+  options         Json
+  explanation     String?        @db.Text // Shown after answering
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model QuizAttempt {
+  id              String         @id @default(cuid())
+  quizId          String
+  quiz            Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score           Int            // Percentage score (0-100)
+  totalPoints     Int            // Total points earned
+  maxPoints       Int            // Maximum possible points
+  answers         Json           // Array of {questionId, selectedAnswer, isCorrect, pointsEarned}
+  passed          Boolean        @default(false)
+  timeSpent       Int?           // Time spent in seconds
+  startedAt       DateTime       @default(now())
+  completedAt     DateTime?
+  
+  // Anxiety tracking during quiz
+  tabSwitches     Int            @default(0)
+  consecutiveClicks Int          @default(0)
+  missedClicks    Int            @default(0)
+  idleTimeSeconds Int            @default(0)
+  scrollReversals Int            @default(0)
 }

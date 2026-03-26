@@ -12,7 +12,7 @@ interface CourseDetails {
   topics: {
     id: string
     title: string
-    content: string
+    content: any
     order: number
   }[]
   teacher: {

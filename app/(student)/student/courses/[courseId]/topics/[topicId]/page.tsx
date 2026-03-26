@@ -7,13 +7,14 @@ import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 interface TopicPageProps {
-  params: {
+  params: Promise<{
     courseId: string
     topicId: string
-  }
+  }>
 }
 
 export default async function StudentTopicPage({ params }: TopicPageProps) {
+  const { courseId, topicId } = await params
   const session = await auth()
 
   if (!session?.user) {
@@ -29,7 +30,7 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
     where: {
       userId_courseId: {
         userId: session.user.id,
-        courseId: params.courseId
+        courseId: courseId
       }
     }
   })
@@ -40,7 +41,7 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
 
   // Get course with topics
   const course = await prisma.course.findUnique({
-    where: { id: params.courseId },
+    where: { id: courseId },
     include: {
       topics: {
         orderBy: { order: "asc" }
@@ -52,20 +53,65 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
     redirect("/student/courses") // Course not found
   }
 
-  const topic = course.topics.find(t => t.id === params.topicId)
+  const topic = course.topics.find(t => t.id === topicId)
   if (!topic) {
-    redirect(`/student/courses/${params.courseId}`) // Topic not found
+    redirect(`/student/courses/${courseId}`) // Topic not found
   }
 
-  const topicIndex = course.topics.findIndex(t => t.id === params.topicId)
+  // Get published quizzes for this topic with questions
+  const quizzes = await prisma.quiz.findMany({
+    where: {
+      topicId: topicId,
+      isPublished: true
+    },
+    include: {
+      questions: {
+        orderBy: { order: "asc" }
+      },
+      _count: {
+        select: { questions: true }
+      }
+    },
+    orderBy: { createdAt: "asc" }
+  })
+
+  // Get student's quiz attempts
+  const attempts = await prisma.quizAttempt.findMany({
+    where: {
+      userId: session.user.id,
+      quiz: {
+        topicId: topicId
+      }
+    },
+    orderBy: { startedAt: "desc" }
+  })
+
+  const topicIndex = course.topics.findIndex(t => t.id === topicId)
 
   // Transform topic data for adapter
   const topicData = {
     id: topic.id,
     title: topic.title,
-    content: topic.content,
+    content: topic.content as any,
     order: topic.order
   }
+
+  // Transform quiz data
+  const quizzesData = quizzes.map(quiz => ({
+    id: quiz.id,
+    title: quiz.title,
+    description: quiz.description,
+    passingScore: quiz.passingScore,
+    maxAttempts: quiz.maxAttempts,
+    timeLimit: quiz.timeLimit,
+    questionsCount: quiz._count.questions,
+    // Get student's best attempt for this quiz
+    bestAttempt: attempts
+      .filter(a => a.quizId === quiz.id && a.completedAt)
+      .sort((a, b) => b.score - a.score)[0] || null,
+    // Count total attempts
+    attemptCount: attempts.filter(a => a.quizId === quiz.id).length
+  }))
 
   return (
     <div className="h-screen flex flex-col">
@@ -74,7 +120,7 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Button variant="ghost" asChild className="gap-2">
-              <Link href={`/student/courses/${params.courseId}`}>
+              <Link href={`/student/courses/${courseId}`}>
                 <ArrowLeft className="h-4 w-4" />
                 Volver al Curso
               </Link>
@@ -93,19 +139,21 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
           topic={topicData}
           topicIndex={topicIndex}
           totalTopics={course.topics.length}
-          profile="Visual" // This could come from user profile
+          profile={enrollment.studyProfile || "Visual"}
+          courseId={courseId}
+          quizzes={quizzesData}
           onBack={() => {
             // Navigate back to course
-            window.location.href = `/student/courses/${params.courseId}`
+            window.location.href = `/student/courses/${courseId}`
           }}
           onComplete={() => {
             // Navigate to next topic or back to course
             const nextTopic = course.topics[topicIndex + 1]
             
             if (nextTopic) {
-              window.location.href = `/student/courses/${params.courseId}/topics/${nextTopic.id}`
+              window.location.href = `/student/courses/${courseId}/topics/${nextTopic.id}`
             } else {
-              window.location.href = `/student/courses/${params.courseId}`
+              window.location.href = `/student/courses/${courseId}`
             }
           }}
         />

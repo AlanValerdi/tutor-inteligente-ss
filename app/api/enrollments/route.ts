@@ -4,8 +4,7 @@ import { prisma } from "@/lib/db"
 import { z } from "zod"
 
 const enrollmentSchema = z.object({
-  courseId: z.string(),
-  enrollKey: z.string()
+  enrollKey: z.string().min(1, "La clave de inscripción es requerida")
 })
 
 export async function POST(request: Request) {
@@ -20,31 +19,38 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { courseId, enrollKey } = enrollmentSchema.parse(body)
+    const { enrollKey } = enrollmentSchema.parse(body)
 
+    // Find course by enrollment key
     const course = await prisma.course.findUnique({
-      where: { id: courseId }
+      where: { enrollKey: enrollKey.trim() },
+      include: {
+        _count: {
+          select: { topics: true }
+        }
+      }
     })
 
     if (!course) {
       return NextResponse.json(
-        { error: "Curso no encontrado" },
+        { error: "Clave de inscripción inválida. Verifica que esté correcta e intenta nuevamente." },
         { status: 404 }
       )
     }
 
-    if (course.enrollKey !== enrollKey) {
+    if (!course.isPublished) {
       return NextResponse.json(
-        { error: "Clave de inscripción incorrecta" },
+        { error: "Este curso aún no está disponible para inscripción" },
         { status: 400 }
       )
     }
 
+    // Check if already enrolled
     const existingEnrollment = await prisma.enrollment.findUnique({
       where: {
         userId_courseId: {
           userId: session.user.id,
-          courseId
+          courseId: course.id
         }
       }
     })
@@ -56,10 +62,11 @@ export async function POST(request: Request) {
       )
     }
 
+    // Create enrollment
     const enrollment = await prisma.enrollment.create({
       data: {
         userId: session.user.id,
-        courseId
+        courseId: course.id
       },
       include: {
         course: {

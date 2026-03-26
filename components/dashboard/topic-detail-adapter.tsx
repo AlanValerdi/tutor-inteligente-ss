@@ -1,21 +1,43 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
   FileText,
   BookOpen,
+  FileQuestion,
+  Clock,
+  Trophy,
+  Lock,
+  Play
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 interface TopicDetails {
   id: string
   title: string
-  content: string
+  content: any
   order: number
+}
+
+interface QuizData {
+  id: string
+  title: string
+  description: string | null
+  passingScore: number
+  maxAttempts: number | null
+  timeLimit: number | null
+  questionsCount: number
+  bestAttempt: {
+    score: number
+    passed: boolean
+  } | null
+  attemptCount: number
 }
 
 interface TopicDetailProps {
@@ -23,6 +45,8 @@ interface TopicDetailProps {
   topicIndex: number
   totalTopics: number
   profile: string
+  courseId: string
+  quizzes: QuizData[]
   onBack: () => void
   onComplete: () => void
 }
@@ -31,19 +55,25 @@ export function TopicDetailAdapter({
   topic, 
   topicIndex, 
   totalTopics, 
-  profile, 
+  profile,
+  courseId,
+  quizzes,
   onBack, 
   onComplete 
 }: TopicDetailProps) {
-  const [completed, setCompleted] = useState(false)
+  const router = useRouter()
+  const [contentRead, setContentRead] = useState(false)
 
-  const handleComplete = () => {
-    setCompleted(true)
-    // Here you would typically update the progress in the database
-    setTimeout(() => {
-      onComplete()
-    }, 1000)
+  // Check if all quizzes are passed
+  const allQuizzesPassed = quizzes.length > 0 
+    ? quizzes.every(q => q.bestAttempt?.passed) 
+    : true
+
+  const handleMarkAsRead = () => {
+    setContentRead(true)
   }
+
+  const canProceed = quizzes.length === 0 || allQuizzesPassed
 
   return (
     <div className="flex-1 overflow-auto">
@@ -88,7 +118,8 @@ export function TopicDetailAdapter({
             <CardContent>
               <div className="prose prose-sm max-w-none dark:prose-invert">
                 {/* Render content with basic formatting */}
-                {topic.content.split('\n').map((paragraph, index) => {
+                {typeof topic.content === 'string' 
+                  ? topic.content.split('\n').map((paragraph: string, index: number) => {
                   if (paragraph.trim() === '') return <br key={index} />
                   
                   // Simple formatting for headers
@@ -115,7 +146,11 @@ export function TopicDetailAdapter({
                       {paragraph}
                     </p>
                   )
-                })}
+                }) : (
+                  <div className="text-muted-foreground">
+                    El contenido utiliza el nuevo formato de bloques. (Soporte en desarrollo)
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -139,39 +174,162 @@ export function TopicDetailAdapter({
           </CardContent>
         </Card>
 
-        {/* Completion section */}
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="text-center">
-              {completed ? (
-                <div className="space-y-4">
-                  <div className="flex justify-center">
-                    <CheckCircle2 className="h-12 w-12 text-success" />
-                  </div>
-                  <h3 className="font-semibold text-success">¡Tema Completado!</h3>
-                  <p className="text-muted-foreground">
-                    Has terminado este tema exitosamente. Continuemos con el siguiente.
-                  </p>
-                  <Button onClick={onComplete} className="gap-2">
-                    Continuar
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <h3 className="font-semibold">¿Has terminado de estudiar este tema?</h3>
-                  <p className="text-muted-foreground">
-                    Asegúrate de haber comprendido el contenido antes de continuar.
-                  </p>
-                  <Button onClick={handleComplete} className="gap-2">
-                    Marcar como Completado
-                    <CheckCircle2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+        {/* Mark as Read Button */}
+        {!contentRead && (
+          <Card className="mb-8 border-0 shadow-sm">
+            <CardContent className="p-6">
+              <div className="text-center space-y-4">
+                <h3 className="font-semibold">¿Has terminado de leer el contenido?</h3>
+                <p className="text-sm text-muted-foreground">
+                  Asegúrate de haber comprendido el material antes de continuar
+                </p>
+                <Button onClick={handleMarkAsRead} className="gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Marcar como Leído
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Quizzes Section */}
+        {contentRead && quizzes.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-4">Cuestionarios de Evaluación</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Completa los siguientes cuestionarios para demostrar tu comprensión del tema
+            </p>
+            
+            <div className="space-y-4">
+              {quizzes.map((quiz) => {
+                const canAttempt = quiz.maxAttempts === null || quiz.attemptCount < quiz.maxAttempts
+                const hasPassed = quiz.bestAttempt?.passed || false
+                
+                return (
+                  <Card key={quiz.id} className={`${hasPassed ? 'border-success/50 bg-success/5' : ''}`}>
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold">{quiz.title}</h3>
+                            {hasPassed && (
+                              <Badge className="bg-success hover:bg-success">
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                Aprobado
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          {quiz.description && (
+                            <p className="text-sm text-muted-foreground mb-3">{quiz.description}</p>
+                          )}
+                          
+                          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <FileQuestion className="h-3 w-3" />
+                              {quiz.questionsCount} preguntas
+                            </span>
+                            {quiz.timeLimit && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {quiz.timeLimit} minutos
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <Trophy className="h-3 w-3" />
+                              {quiz.passingScore}% mínimo
+                            </span>
+                            {quiz.maxAttempts && (
+                              <span className="flex items-center gap-1">
+                                Intentos: {quiz.attemptCount}/{quiz.maxAttempts}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {quiz.bestAttempt && (
+                            <div className="mt-3 p-3 rounded-lg bg-muted/50">
+                              <div className="text-xs">
+                                <span className="font-medium">Mejor intento:</span>{" "}
+                                <span className={quiz.bestAttempt.passed ? "text-success font-semibold" : "text-destructive"}>
+                                  {quiz.bestAttempt.score}%
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="ml-4">
+                          {hasPassed ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => router.push(`/student/courses/${courseId}/topics/${topic.id}/quizzes/${quiz.id}/take`)}
+                              className="gap-2"
+                            >
+                              <Play className="h-4 w-4" />
+                              Volver a Intentar
+                            </Button>
+                          ) : canAttempt ? (
+                            <Button
+                              size="sm"
+                              onClick={() => router.push(`/student/courses/${courseId}/topics/${topic.id}/quizzes/${quiz.id}/take`)}
+                              className="gap-2"
+                            >
+                              <Play className="h-4 w-4" />
+                              {quiz.attemptCount > 0 ? 'Reintentar' : 'Comenzar'}
+                            </Button>
+                          ) : (
+                            <Button size="sm" disabled className="gap-2">
+                              <Lock className="h-4 w-4" />
+                              Sin Intentos
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        )}
+
+        {/* Completion section */}
+        {contentRead && (
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-6">
+              <div className="text-center">
+                {canProceed ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-center">
+                      <CheckCircle2 className="h-12 w-12 text-success" />
+                    </div>
+                    <h3 className="font-semibold text-success">¡Tema Completado!</h3>
+                    <p className="text-muted-foreground">
+                      {quizzes.length > 0 
+                        ? "Has aprobado todos los cuestionarios. ¡Excelente trabajo!"
+                        : "Has terminado de estudiar este tema."}
+                    </p>
+                    <Button onClick={onComplete} className="gap-2">
+                      Continuar al Siguiente Tema
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex justify-center">
+                      <Lock className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                    <h3 className="font-semibold">Completa los Cuestionarios</h3>
+                    <p className="text-muted-foreground">
+                      Debes aprobar todos los cuestionarios para continuar al siguiente tema
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )

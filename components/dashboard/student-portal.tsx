@@ -3,17 +3,15 @@
 import { useState } from "react"
 import { StudentSidebar } from "../lms/student-sidebar"
 import { StudentDashboard } from "./student-dashboard"
-import { CourseExplorer } from "./course-explorer"
+import { EnrollByKey } from "../student/enroll-by-key"
 import { CourseViewAdapter } from "./course-view-adapter"
 import { TopicDetailAdapter } from "./topic-detail-adapter"
 import { DashboardSkeleton } from "../ui/dashboard-skeletons"
 import { SWRDebugPanel } from "../debug/swr-debug-panel"
 import { 
   useDashboardData, 
-  usePublishedCourses, 
   useCourseDetails
 } from "@/hooks/use-dashboard-data"
-import { useMutations } from "@/hooks/use-mutations"
 import { toast } from "sonner"
 
 interface StudentPortalProps {
@@ -22,7 +20,7 @@ interface StudentPortalProps {
   studentId: string
 }
 
-type StudentView = "dashboard" | "browse" | "course" | "topic"
+type StudentView = "dashboard" | "enroll" | "course" | "topic"
 
 export function StudentPortal({ onExit, studentName, studentId }: StudentPortalProps) {
   const [currentView, setCurrentView] = useState<StudentView>("dashboard")
@@ -32,11 +30,7 @@ export function StudentPortal({ onExit, studentName, studentId }: StudentPortalP
   
   // SWR hooks for data management
   const dashboardData = useDashboardData()
-  const publishedCoursesResult = usePublishedCourses(currentView === "browse")
   const selectedCourseResult = useCourseDetails(selectedCourseId)
-  
-  // Optimistic mutation hooks
-  const mutations = useMutations()
 
   // Extract data from SWR hooks
   const {
@@ -50,35 +44,20 @@ export function StudentPortal({ onExit, studentName, studentId }: StudentPortalP
   } = dashboardData
 
   const {
-    data: availableCourses,
-    isLoading: isCoursesLoading,
-    hasError: hasCoursesError,
-    error: coursesError
-  } = publishedCoursesResult
-
-  const {
     data: selectedCourse,
     isLoading: isCourseLoading,
     hasError: hasCourseError,
     error: courseError
   } = selectedCourseResult
 
-  // Extract mutation states
-  const { isEnrolling } = mutations
-
-  // Load initial data
-  // SWR handles data loading automatically - no useEffect needed!
-
   const handleSelectCourse = async (courseId: string) => {
-    if (courseId === "browse") {
-      setCurrentView("browse")
-      // publishedCoursesResult will automatically start fetching when enabled
+    if (courseId === "enroll") {
+      setCurrentView("enroll")
       return
     }
 
     setSelectedCourseId(courseId)
     setCurrentView("course")
-    // selectedCourseResult will automatically start fetching with the new courseId
   }
 
   const handleSelectTopic = (topicId: string) => {
@@ -90,7 +69,6 @@ export function StudentPortal({ onExit, studentName, studentId }: StudentPortalP
     setCurrentView("dashboard")
     setSelectedCourseId(null)
     setSelectedTopicId(null)
-    // SWR automatically manages data - no manual state reset needed
   }
 
   const handleBackToCourse = () => {
@@ -98,16 +76,11 @@ export function StudentPortal({ onExit, studentName, studentId }: StudentPortalP
     setSelectedTopicId(null)
   }
 
-  const handleEnrollInCourse = async (courseId: string, enrollKey: string) => {
-    try {
-      // Use optimistic mutation - UI updates instantly, with rollback on error
-      await mutations.enroll({ courseId, enrollKey })
-      toast.success("¡Inscripción exitosa!")
-    } catch (error) {
-      console.error("Error enrolling in course:", error)
-      toast.error("Error al inscribirse en el curso")
-      // Optimistic hook automatically handles rollback on error
-    }
+  const handleEnrollSuccess = () => {
+    // Refresh dashboard data to show new enrollment
+    refreshDashboard()
+    handleBackToDashboard()
+    toast.success("¡Inscripción exitosa!")
   }
 
   const handleTopicComplete = () => {
@@ -164,11 +137,11 @@ export function StudentPortal({ onExit, studentName, studentId }: StudentPortalP
         currentView={currentView}
         onNavigate={(view) => {
           if (view === "dashboard") handleBackToDashboard()
-          else if (view === "course") setCurrentView("browse")
+          else if (view === "course") setCurrentView("enroll")
         }}
         onExit={onExit}
         studentName={studentName}
-        studentProfile="Estudiante" // Esto podría venir de la sesión del usuario
+        studentProfile="Estudiante"
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
@@ -182,26 +155,9 @@ export function StudentPortal({ onExit, studentName, studentId }: StudentPortalP
         />
       )}
 
-      {currentView === "browse" && (
-        <CourseExplorer
-          availableCourses={availableCourses?.map(course => ({
-            id: course.id,
-            title: course.title,
-            description: course.description || "",
-            enrollKey: "", // This will need to be handled properly - maybe from enrollment action
-            isPublished: true,
-            teacher: {
-              id: course.teacher.id,
-              name: course.teacher.name,
-              image: null // PublishedCourse doesn't have image, set to null
-            },
-            topics: Array(course._count.topics).fill(0).map((_, i) => ({ id: `topic-${i}` })),
-            studentsEnrolled: course._count.enrollments,
-          })) || []}
-          onEnroll={handleEnrollInCourse}
-          onBack={handleBackToDashboard}
-          isLoading={isCoursesLoading}
-          isEnrolling={isEnrolling}
+      {currentView === "enroll" && (
+        <EnrollByKey
+          onEnrollSuccess={handleEnrollSuccess}
         />
       )}
 
@@ -230,12 +186,14 @@ export function StudentPortal({ onExit, studentName, studentId }: StudentPortalP
           topic={{
             id: selectedTopicData.id,
             title: selectedTopicData.title,
-            content: selectedTopicData.description || "", // Map description to content
-            order: selectedTopicData.position // Map position to order
+            content: selectedTopicData.description || "",
+            order: selectedTopicData.position
           }}
           topicIndex={topicIndex}
           totalTopics={selectedCourse.topics.length}
-          profile="Visual" // Esto también podría venir del perfil del usuario
+          profile="Visual"
+          courseId={selectedCourse.id}
+          quizzes={[]} // TODO: Fetch quizzes for this topic
           onBack={handleBackToCourse}
           onComplete={handleTopicComplete}
         />
