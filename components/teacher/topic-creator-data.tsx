@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Upload, FileText, Video, Headphones, Plus, CheckCircle2, ArrowLeft, Edit2, Trash2, Save, X } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from "next/navigation"
 import { createTopic, updateTopic, deleteTopic } from "@/lib/actions/teacher"
+import { ContentEditor } from "@/components/teacher/content-editor"
+import { TopicContent, ContentBlock } from "@/types/content"
+import { parseTopicContent } from "@/lib/content-helpers"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,13 +41,20 @@ export function TopicCreatorData({ course, topics: initialTopics }: TopicCreator
   const router = useRouter()
   const [submitted, setSubmitted] = useState(false)
   const [title, setTitle] = useState("")
-  const [content, setContent] = useState("")
+  const [content, setContent] = useState<ContentBlock[]>([])
+  
+  // Initialize default content block only on client side to avoid hydration mismatch
+  useEffect(() => {
+    if (content.length === 0) {
+      setContent([{ id: crypto.randomUUID(), type: "text", profiles: ["Visual", "Auditivo", "Kinestesico"], content: "" }])
+    }
+  }, [])
   const [loading, setLoading] = useState(false)
   
   // Edit state
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState("")
-  const [editContent, setEditContent] = useState("")
+  const [editContent, setEditContent] = useState<ContentBlock[]>([])
   
   // Delete state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -58,7 +68,7 @@ export function TopicCreatorData({ course, topics: initialTopics }: TopicCreator
         await createTopic({
           courseId: course.id,
           title,
-          content,
+          content: { version: "1.0", blocks: content } as any,
           order: initialTopics.length + 1
         })
         
@@ -66,7 +76,7 @@ export function TopicCreatorData({ course, topics: initialTopics }: TopicCreator
         setTimeout(() => {
           setSubmitted(false)
           setTitle("")
-          setContent("")
+          setContent([{ id: crypto.randomUUID(), type: "text", profiles: ["Visual", "Auditivo", "Kinestesico"], content: "" }])
           router.refresh()
         }, 2000)
       } catch (error) {
@@ -80,13 +90,14 @@ export function TopicCreatorData({ course, topics: initialTopics }: TopicCreator
   const handleEditStart = (topic: typeof initialTopics[0]) => {
     setEditingTopicId(topic.id)
     setEditTitle(topic.title)
-    setEditContent(typeof topic.content === 'string' ? topic.content : JSON.stringify(topic.content))
+    const parsed = parseTopicContent(topic.content)
+    setEditContent(parsed.blocks)
   }
 
   const handleEditCancel = () => {
     setEditingTopicId(null)
     setEditTitle("")
-    setEditContent("")
+    setEditContent([])
   }
 
   const handleEditSave = async (topicId: string) => {
@@ -96,7 +107,7 @@ export function TopicCreatorData({ course, topics: initialTopics }: TopicCreator
     try {
       await updateTopic(topicId, {
         title: editTitle,
-        content: editContent
+        content: { version: "1.0", blocks: editContent } as any
       })
       setEditingTopicId(null)
       router.refresh()
@@ -170,13 +181,10 @@ export function TopicCreatorData({ course, topics: initialTopics }: TopicCreator
                             />
                           </div>
                           <div>
-                            <Label htmlFor={`edit-content-${topic.id}`} className="text-xs">Contenido</Label>
-                            <Textarea
-                              id={`edit-content-${topic.id}`}
-                              value={editContent}
-                              onChange={(e) => setEditContent(e.target.value)}
-                              rows={4}
-                              className="mt-1"
+                            <Label className="text-xs mb-2 block">Contenido</Label>
+                            <ContentEditor
+                              blocks={editContent}
+                              onChange={setEditContent}
                             />
                           </div>
                           <div className="flex gap-2 justify-end">
@@ -276,13 +284,10 @@ export function TopicCreatorData({ course, topics: initialTopics }: TopicCreator
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="content">Contenido</Label>
-                  <Textarea
-                    id="content"
-                    placeholder="Contenido del tema (puede incluir texto, enlaces, etc.)..."
-                    rows={8}
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                  <Label className="mb-2">Contenido</Label>
+                  <ContentEditor
+                    blocks={content}
+                    onChange={setContent}
                   />
                 </div>
               </CardContent>

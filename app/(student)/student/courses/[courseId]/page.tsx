@@ -7,12 +7,13 @@ import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 interface CoursePageProps {
-  params: {
+  params: Promise<{
     courseId: string
-  }
+  }>
 }
 
 export default async function StudentCoursePage({ params }: CoursePageProps) {
+  const { courseId } = await params
   const session = await auth()
 
   if (!session?.user) {
@@ -28,7 +29,7 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
     where: {
       userId_courseId: {
         userId: session.user.id,
-        courseId: params.courseId
+        courseId: courseId
       }
     }
   })
@@ -39,7 +40,7 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
 
   // Get course with topics
   const course = await prisma.course.findUnique({
-    where: { id: params.courseId },
+    where: { id: courseId },
     include: {
       teacher: {
         select: {
@@ -74,9 +75,9 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="flex flex-col h-full">
       {/* Header with navigation */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
         <div className="container mx-auto px-4 py-3">
           <Button variant="ghost" asChild className="gap-2">
             <Link href="/student/courses">
@@ -88,14 +89,10 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
       </div>
 
       {/* Course content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-auto">
         <CourseViewAdapter
           course={courseData}
-          onBack={() => {}}
-          onSelectTopic={(topicId) => {
-            // Navigate to topic page
-            window.location.href = `/student/courses/${params.courseId}/topics/${topicId}`
-          }}
+          courseId={courseId}
         />
       </div>
     </div>

@@ -1,32 +1,44 @@
 "use client"
 
 import { GraduationCap, LayoutDashboard, BookOpen, User, LogOut, PanelLeftClose, PanelLeft } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { useState } from "react"
+import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-type StudentView = "dashboard" | "course" | "topic" | "browse" | "enroll"
-
-interface StudentSidebarProps {
-  currentView: StudentView
-  onNavigate: (view: StudentView) => void
-  onExit: () => void
+interface StudentLayoutSidebarProps {
   studentName: string
-  studentProfile: string
-  collapsed: boolean
-  onToggle: () => void
+  studyProfile: string
 }
 
-export function StudentSidebar({ currentView, onNavigate, onExit, studentName, studentProfile, collapsed, onToggle }: StudentSidebarProps) {
+export function StudentLayoutSidebar({ studentName, studyProfile }: StudentLayoutSidebarProps) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const [collapsed, setCollapsed] = useState(false)
+
   const navItems = [
-    { id: "dashboard" as const, label: "Panel Principal", icon: LayoutDashboard },
-    { id: "course" as const, label: "Mis Cursos", icon: BookOpen },
+    { href: "/student", label: "Panel Principal", icon: LayoutDashboard },
+    { href: "/student/courses", label: "Mis Cursos", icon: BookOpen },
   ]
+
+  const handleExit = async () => {
+    await signOut({ redirect: false })
+    router.push("/login")
+  }
+
+  const isActive = (href: string) => {
+    if (href === "/student") {
+      return pathname === "/student"
+    }
+    return pathname.startsWith(href)
+  }
 
   return (
     <TooltipProvider delayDuration={0}>
       <aside className={cn(
-        "flex h-screen flex-col bg-sidebar text-sidebar-foreground transition-all duration-300",
+        "flex h-screen flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 shrink-0",
         collapsed ? "w-16" : "w-64"
       )}>
         <div className={cn(
@@ -49,7 +61,7 @@ export function StudentSidebar({ currentView, onNavigate, onExit, studentName, s
             type="button"
             variant="ghost"
             size="icon"
-            onClick={onToggle}
+            onClick={() => setCollapsed(!collapsed)}
             className="h-8 w-8 text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
           >
             {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
@@ -60,14 +72,15 @@ export function StudentSidebar({ currentView, onNavigate, onExit, studentName, s
         <nav className="flex-1 px-3 py-2">
           <ul className="flex flex-col gap-1" role="list">
             {navItems.map((item) => {
+              const active = isActive(item.href)
               const btn = (
                 <button
                   type="button"
-                  onClick={() => onNavigate(item.id)}
+                  onClick={() => router.push(item.href)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     collapsed && "justify-center px-0",
-                    currentView === item.id
+                    active
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                   )}
@@ -78,7 +91,7 @@ export function StudentSidebar({ currentView, onNavigate, onExit, studentName, s
               )
 
               return (
-                <li key={item.id}>
+                <li key={item.href}>
                   {collapsed ? (
                     <Tooltip>
                       <TooltipTrigger asChild>{btn}</TooltipTrigger>
@@ -99,7 +112,7 @@ export function StudentSidebar({ currentView, onNavigate, onExit, studentName, s
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-sidebar-foreground">{studentName}</p>
-                <p className="text-xs text-sidebar-foreground/60">Aprendiz {studentProfile}</p>
+                <p className="text-xs text-sidebar-foreground/60">Aprendiz {studyProfile}</p>
               </div>
             </div>
           )}
@@ -108,7 +121,7 @@ export function StudentSidebar({ currentView, onNavigate, onExit, studentName, s
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  onClick={onExit}
+                  onClick={handleExit}
                   className="flex w-full items-center justify-center rounded-lg py-2 text-sm text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                 >
                   <LogOut className="h-4 w-4" />
@@ -119,7 +132,7 @@ export function StudentSidebar({ currentView, onNavigate, onExit, studentName, s
           ) : (
             <button
               type="button"
-              onClick={onExit}
+              onClick={handleExit}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
             >
               <LogOut className="h-4 w-4" />

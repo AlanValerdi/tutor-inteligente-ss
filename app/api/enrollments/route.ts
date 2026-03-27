@@ -62,11 +62,18 @@ export async function POST(request: Request) {
       )
     }
 
+    // Get user's study profile
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { studyProfile: true }
+    })
+
     // Create enrollment
     const enrollment = await prisma.enrollment.create({
       data: {
         userId: session.user.id,
-        courseId: course.id
+        courseId: course.id,
+        studyProfile: user?.studyProfile
       },
       include: {
         course: {

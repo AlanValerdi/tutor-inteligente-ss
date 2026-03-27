@@ -1,0 +1,28 @@
+--- components/student/topic-content-viewer.tsx
++++ components/student/topic-content-viewer.tsx
+@@ -9,10 +9,23 @@
+ 
+ export function TopicContentViewer({ content, profile }: TopicContentViewerProps) {
+   const blocks = filterBlocksByProfile(content.blocks, profile)
+-  console.log("TopicContentViewer rendering. Profile:", profile, "Blocks:", blocks.length, "Raw content:", content);
+ 
+   return (
+     <div className="max-w-2xl mx-auto space-y-8 py-8">
++      {!blocks || blocks.length === 0 ? (
++        <div className="bg-red-50 text-red-500 p-4 rounded-md">
++          <h3 className="font-bold">Debug Info</h3>
++          <p>No blocks found after filtering.</p>
++          <p>Profile: {String(profile)}</p>
++          <details className="mt-2 text-xs opacity-70">
++            <summary>Raw Content Data</summary>
++            <pre className="mt-2 whitespace-pre-wrap">{JSON.stringify(content, null, 2)}</pre>
++          </details>
++          <details className="mt-2 text-xs opacity-70">
++            <summary>Raw Blocks</summary>
++            <pre className="mt-2 whitespace-pre-wrap">{JSON.stringify(content.blocks, null, 2)}</pre>
++          </details>
++        </div>
++      ) : null}
+       {blocks.map((block) => {
+         switch (block.type) {
+           case "text":

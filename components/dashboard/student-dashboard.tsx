@@ -1,6 +1,7 @@
 "use client"
 
 import { BookOpen, TrendingUp, Award, Users, Calculator, Code, Atom, ArrowRight } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -45,16 +46,20 @@ interface DashboardStats {
 interface StudentDashboardProps {
   stats: DashboardStats
   enrolledCourses: CourseWithProgress[]
-  onSelectCourse: (courseId: string) => void
   studentName: string
 }
 
 export function StudentDashboard({ 
   stats, 
-  enrolledCourses, 
-  onSelectCourse, 
+  enrolledCourses,
   studentName 
 }: StudentDashboardProps) {
+  const router = useRouter()
+  
+  const handleSelectCourse = (courseId: string) => {
+    router.push(`/student/courses/${courseId}`)
+  }
+  
   const dashboardStats = [
     {
       label: "Cursos Inscritos",
@@ -135,7 +140,7 @@ export function StudentDashboard({
                 onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                onSelectCourse("browse")
+                router.push("/student/courses")
               }}>
                 Explorar Cursos
               </Button>
@@ -156,7 +161,7 @@ export function StudentDashboard({
                 <Card
                   key={course.id}
                   className="group cursor-pointer border-0 shadow-sm transition-all hover:shadow-md"
-                  onClick={() => onSelectCourse(course.id)}
+                  onClick={() => handleSelectCourse(course.id)}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">

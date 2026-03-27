@@ -31,6 +31,7 @@ model User {
   name          String?
   image         String?
   role          Role          @default(STUDENT)
+  studyProfile  StudyProfile?
   password      String?
   accounts      Account[]
   sessions      Session[]

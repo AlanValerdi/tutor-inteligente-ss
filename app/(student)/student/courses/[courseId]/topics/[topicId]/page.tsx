@@ -53,9 +53,20 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
     redirect("/student/courses") // Course not found
   }
 
-  const topic = course.topics.find(t => t.id === topicId)
-  if (!topic) {
+  const topicFromArray = course.topics.find(t => t.id === topicId)
+  if (!topicFromArray) {
     redirect(`/student/courses/${courseId}`) // Topic not found
+  }
+  
+  // CRITICAL FIX: We need to fetch the topic directly from the database
+  // to get the full JSON content. When using `include: { topics: true }`,
+  // Prisma may return a stripped-down version of JSON fields.
+  const topic = await prisma.topic.findUnique({
+    where: { id: topicId }
+  })
+  
+  if (!topic) {
+    redirect(`/student/courses/${courseId}`)
   }
 
   // Get published quizzes for this topic with questions
@@ -88,11 +99,14 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
 
   const topicIndex = course.topics.findIndex(t => t.id === topicId)
 
+  // Serialize JSON safely for Server-to-Client component boundary
+  const serializedContent = JSON.parse(JSON.stringify(topic.content))
+
   // Transform topic data for adapter
   const topicData = {
     id: topic.id,
     title: topic.title,
-    content: topic.content as any,
+    content: serializedContent,
     order: topic.order
   }
 
@@ -114,9 +128,9 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
   }))
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="flex flex-col h-full">
       {/* Header with navigation */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Button variant="ghost" asChild className="gap-2">
@@ -134,7 +148,7 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
       </div>
 
       {/* Topic content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-auto">
         <TopicDetailAdapter
           topic={topicData}
           topicIndex={topicIndex}
@@ -142,20 +156,10 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
           profile={enrollment.studyProfile || "Visual"}
           courseId={courseId}
           quizzes={quizzesData}
-          onBack={() => {
-            // Navigate back to course
-            window.location.href = `/student/courses/${courseId}`
-          }}
-          onComplete={() => {
-            // Navigate to next topic or back to course
-            const nextTopic = course.topics[topicIndex + 1]
-            
-            if (nextTopic) {
-              window.location.href = `/student/courses/${courseId}/topics/${nextTopic.id}`
-            } else {
-              window.location.href = `/student/courses/${courseId}`
-            }
-          }}
+          backUrl={`/student/courses/${courseId}`}
+          nextTopicUrl={course.topics[topicIndex + 1] 
+            ? `/student/courses/${courseId}/topics/${course.topics[topicIndex + 1].id}` 
+            : null}
         />
       </div>
     </div>

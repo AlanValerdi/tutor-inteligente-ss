@@ -335,7 +335,7 @@ export async function getCourseTopics(courseId: string) {
 export async function createTopic(data: {
   courseId: string
   title: string
-  content: string
+  content: any
   order: number
 }) {
   const session = await auth()
@@ -368,7 +368,7 @@ export async function updateTopic(
   topicId: string,
   data: {
     title?: string
-    content?: string
+    content?: any
     order?: number
   }
 ) {

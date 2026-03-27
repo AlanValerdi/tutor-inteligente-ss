@@ -1,9 +1,29 @@
 "use client"
 
-import { ArrowLeft, CheckCircle2, Lock, Circle, Clock, BookOpen, Users } from "lucide-react"
+import { CheckCircle2, Lock, Circle, BookOpen, Users } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+
+// Helper to extract preview text from topic content
+function getContentPreview(content: any): string {
+  if (typeof content === 'string') {
+    return content.substring(0, 100)
+  }
+  
+  // If it's our JSON block structure, try to get text from first text block
+  if (content && typeof content === 'object' && Array.isArray(content.blocks)) {
+    const textBlock = content.blocks.find((b: any) => b.type === 'text')
+    if (textBlock?.content) {
+      // Strip HTML tags and get plain text
+      const plainText = textBlock.content.replace(/<[^>]*>/g, ' ').trim()
+      return plainText.substring(0, 100)
+    }
+  }
+  
+  return "Contenido multimedia disponible"
+}
 
 interface CourseDetails {
   id: string
@@ -28,23 +48,22 @@ interface CourseDetails {
 
 interface CourseViewProps {
   course: CourseDetails
-  onBack: () => void
-  onSelectTopic: (topicId: string) => void
+  courseId: string
 }
 
-export function CourseViewAdapter({ course, onBack, onSelectTopic }: CourseViewProps) {
+export function CourseViewAdapter({ course, courseId }: CourseViewProps) {
+  const router = useRouter()
+  
   // Mock progress calculation - in a real app you'd track this per user
   const courseProgress = 0 // This should come from enrollment data
 
-  return (
-    <div className="flex-1 overflow-auto">
-      <div className="px-8 py-8">
-        <Button variant="ghost" onClick={onBack} className="mb-6 gap-2 text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" />
-          Volver al Panel
-        </Button>
+  const handleSelectTopic = (topicId: string) => {
+    router.push(`/student/courses/${courseId}/topics/${topicId}`)
+  }
 
-        <div className="mb-8">
+  return (
+    <div className="px-8 py-8">
+      <div className="mb-8">
           <h1 className="mb-2 font-display text-2xl font-bold text-foreground">{course.title}</h1>
           <p className="mb-4 text-muted-foreground leading-relaxed">
             {course.description || "Explora el contenido de este curso y desarrolla nuevas habilidades."}
@@ -92,7 +111,7 @@ export function CourseViewAdapter({ course, onBack, onSelectTopic }: CourseViewP
                     className={`relative ml-14 cursor-pointer border-0 shadow-sm transition-all hover:shadow-md ${
                       isCurrentTopic ? "ring-2 ring-primary ring-offset-2" : ""
                     }`}
-                    onClick={() => !isLocked && onSelectTopic(topic.id)}
+                    onClick={() => !isLocked && handleSelectTopic(topic.id)}
                   >
                     <div className="absolute -left-14 top-1/2 -translate-y-1/2">
                       <div className={`flex h-12 w-12 items-center justify-center rounded-full border-2 ${
@@ -121,7 +140,7 @@ export function CourseViewAdapter({ course, onBack, onSelectTopic }: CourseViewP
                             {topic.title}
                           </h3>
                           <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                            {topic.content.substring(0, 100)}...
+                            {getContentPreview(topic.content)}...
                           </p>
                           
                           <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
@@ -162,6 +181,5 @@ export function CourseViewAdapter({ course, onBack, onSelectTopic }: CourseViewP
           </Card>
         )}
       </div>
-    </div>
   )
 }

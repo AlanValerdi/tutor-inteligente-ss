@@ -1,0 +1,10 @@
+--- components/student/topic-content-viewer.tsx
++++ components/student/topic-content-viewer.tsx
+@@ -9,6 +9,7 @@
+ 
+ export function TopicContentViewer({ content, profile }: TopicContentViewerProps) {
+   const blocks = filterBlocksByProfile(content.blocks, profile)
++  console.log("TopicContentViewer rendering. Profile:", profile, "Blocks:", blocks.length, "Raw content:", content);
+ 
+   return (
+     <div className="max-w-2xl mx-auto space-y-8 py-8">

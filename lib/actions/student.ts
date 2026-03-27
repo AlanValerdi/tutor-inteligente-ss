@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db"
 import { QuestionType } from "@prisma/client"
+import { checkAnswer as sharedCheckAnswer } from "@/lib/quiz-helpers"
 
 interface SubmitQuizAnswer {
   questionId: string
@@ -53,7 +54,7 @@ export async function submitQuizAttempt(params: SubmitQuizAttemptParams) {
       let pointsEarned = 0
 
       if (userAnswer && userAnswer.selectedAnswer) {
-        isCorrect = checkAnswer(question, userAnswer.selectedAnswer)
+        isCorrect = sharedCheckAnswer(question.type, question.options, userAnswer.selectedAnswer)
         if (isCorrect) {
           pointsEarned = question.points
           earnedPoints += pointsEarned
@@ -148,33 +149,6 @@ export async function submitQuizAttempt(params: SubmitQuizAttemptParams) {
   }
 }
 
-// Helper function to check if answer is correct
-function checkAnswer(question: any, selectedAnswer: string): boolean {
-  switch (question.type) {
-    case QuestionType.MULTIPLE_CHOICE: {
-      const options = question.options as Array<{ text: string; isCorrect: boolean }>
-      const correctOption = options.find(opt => opt.isCorrect)
-      return correctOption?.text === selectedAnswer
-    }
-
-    case QuestionType.TRUE_FALSE: {
-      const options = question.options as { correctAnswer: boolean }
-      return String(options.correctAnswer) === selectedAnswer
-    }
-
-    case QuestionType.SHORT_ANSWER: {
-      const options = question.options as { acceptedAnswers: string[] }
-      // Case-insensitive comparison, trim whitespace
-      const normalizedAnswer = selectedAnswer.trim().toLowerCase()
-      return options.acceptedAnswers.some(
-        accepted => accepted.trim().toLowerCase() === normalizedAnswer
-      )
-    }
-
-    default:
-      return false
-  }
-}
 
 // Helper function to update anxiety level based on metrics
 async function updateAnxietyLevel(enrollmentId: string) {
@@ -224,4 +198,36 @@ async function updateAnxietyLevel(enrollmentId: string) {
     where: { id: enrollmentId },
     data: { anxietyLevel }
   })
+}
+
+export async function getQuestionForPractice(questionId: string) {
+  const { auth } = await import("@/lib/auth")
+  const session = await auth()
+  if (!session?.user) throw new Error("No autorizado")
+
+  const question = await prisma.question.findUnique({
+    where: { id: questionId },
+    select: {
+      id: true,
+      type: true,
+      questionText: true,
+      options: true,
+      explanation: true
+    }
+  })
+
+  return question
+}
+
+export async function saveStudyProfile(profile: "Visual" | "Auditivo" | "Kinestesico") {
+  const { auth } = await import("@/lib/auth")
+  const session = await auth()
+  if (!session?.user) throw new Error("No autorizado")
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { studyProfile: profile }
+  })
+
+  return { success: true }
 }
