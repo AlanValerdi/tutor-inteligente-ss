@@ -13,7 +13,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-      allowDangerousEmailAccountLinking: true, // Allow linking Google to existing email accounts
     }),
     Credentials({
       name: "credentials",
@@ -55,30 +54,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async signIn({ user, account }) {
-      // Handle Google OAuth sign in
+      // Handle Google OAuth sign in - after PrismaAdapter creates the user
       if (account?.provider === "google" && user.email) {
         try {
-          // Check if user exists
-          const existingUser = await prisma.user.findUnique({
+          const dbUser = await prisma.user.findUnique({
             where: { email: user.email },
           })
 
-          if (!existingUser) {
-            // Create new user if doesn't exist
-            const role = isAdminEmail(user.email) ? "ADMIN" : "STUDENT"
-            await prisma.user.create({
-              data: {
-                email: user.email,
-                name: user.name || "Estudiante",
-                image: user.image,
-                role,
-                // Don't set password for OAuth users
-              },
-            })
+          if (dbUser) {
+            // If user role is still STUDENT (default), check if they should be ADMIN
+            if (dbUser.role === "STUDENT" && isAdminEmail(user.email)) {
+              await prisma.user.update({
+                where: { id: dbUser.id },
+                data: { role: "ADMIN" }
+              })
+            }
           }
         } catch (error) {
           console.error("Error during Google sign in callback:", error)
-          return false
         }
       }
       return true
@@ -89,13 +82,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.role = (user as any).role
       }
       
-      // For Google OAuth, fetch user data to get role if not already set
-      if (account?.provider === "google" && !token.role && token.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: token.email as string },
-        })
-        if (dbUser) {
-          token.role = dbUser.role
+      // For Google OAuth, fetch user data to ensure we have the latest role
+      if (account?.provider === "google" && token.email) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email as string },
+          })
+          if (dbUser) {
+            token.id = dbUser.id
+            token.role = dbUser.role
+          }
+        } catch (error) {
+          console.error("Error fetching user role:", error)
         }
       }
       
