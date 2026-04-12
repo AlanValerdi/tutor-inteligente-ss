@@ -97,3 +97,52 @@ export interface QuizBlock extends BaseBlock {
 - Bases de datos: Railway (PostgreSQL) - Mantener JSON en la tabla `Topic`.
 - Almacenamiento: Sin storage propietario. Imágenes deben ser URLs externas. Videos de YouTube.
 - Estructura: Mantener híbrido (Server actions para profe, API+SWR o Server actions directos si aplica para estudiante).
+
+---
+
+## 📚 Flujo Post-Diagnóstico (NUEVO - v2)
+
+### Problemas Identificados en v1
+1. Después del cuestionario de diagnóstico, el usuario era redirigido a `/student` (Panel Principal)
+2. El dashboard mostraba "No tienes cursos inscritos" sin forma de inscribirse
+3. No había entrada clara para ingresar clave de inscripción
+
+### Solución Implementada en v2
+**Nueva ruta post-diagnóstico:**
+```
+1. Usuario completa Diagnostic Wizard
+   ↓
+2. Se guarda studyProfile en User.studyProfile
+   ↓
+3. Redirige a /student/enroll (NEW - Página de inscripción)
+   ↓
+4. Usuario ve EnrollByKey component
+   ↓
+5. Ingresa clave de inscripción (formato: XXXX-XXXX-XXXX)
+   ↓
+6. Si inscripción exitosa → Redirige a /student/courses
+   ↓
+7. Usuario ve lista de cursos inscritos
+```
+
+### Cambios en Navegación del Sidebar
+| Item | Ruta | Descripción |
+|------|------|-------------|
+| Panel Principal | `/student` | Dashboard con estadísticas |
+| **Inscribirse a Curso** | **`/student/enroll`** | **NUEVO - Ingresa clave** |
+| Mis Cursos | `/student/courses` | Lista de cursos inscritos |
+
+### Archivos Nuevos
+- `/app/(student)/student/enroll/page.tsx` - Servidor (auth, validaciones)
+- `/app/(student)/student/enroll/enroll-client.tsx` - Cliente (EnrollByKey UI)
+
+### Archivos Modificados
+1. `/app/(student)/onboarding/onboarding-client.tsx` 
+   - Cambio: `router.push("/student")` → `router.push("/student/enroll")`
+   
+2. `/components/lms/student-layout-sidebar.tsx`
+   - Agregado: `{ href: "/student/enroll", label: "Inscribirse a Curso", icon: Key }`
+
+### Componentes Limpiados
+- ✅ Eliminado: `/components/dashboard/sidebar.tsx` (obsoleto)
+- ✅ Eliminado: `/components/dashboard/header.tsx` (obsoleto)

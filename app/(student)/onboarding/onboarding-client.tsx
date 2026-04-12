@@ -14,7 +14,7 @@ export function OnboardingClient() {
     setSaving(true)
     try {
       await saveStudyProfile(profile)
-      router.push("/student")
+      router.push("/student/enroll")
     } catch (error) {
       console.error(error)
       setSaving(false)

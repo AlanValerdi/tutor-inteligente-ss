@@ -1,6 +1,6 @@
 "use client"
 
-import { GraduationCap, LayoutDashboard, BookOpen, User, LogOut, PanelLeftClose, PanelLeft } from "lucide-react"
+import { GraduationCap, LayoutDashboard, BookOpen, Key, User, LogOut, PanelLeftClose, PanelLeft } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 import { signOut } from "next-auth/react"
@@ -20,6 +20,7 @@ export function StudentLayoutSidebar({ studentName, studyProfile }: StudentLayou
 
   const navItems = [
     { href: "/student", label: "Panel Principal", icon: LayoutDashboard },
+    { href: "/student/enroll", label: "Inscribirse a Curso", icon: Key },
     { href: "/student/courses", label: "Mis Cursos", icon: BookOpen },
   ]
 
