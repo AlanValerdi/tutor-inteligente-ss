@@ -135,15 +135,15 @@ export function StudentDashboard({
               <p className="text-muted-foreground text-center mb-4">
                 Explora los cursos disponibles y comienza tu camino de aprendizaje.
               </p>
-              <Button 
-                type="button"
-                onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                router.push("/student/courses")
-              }}>
-                Explorar Cursos
-              </Button>
+               <Button 
+                 type="button"
+                 onClick={(e) => {
+                 e.preventDefault()
+                 e.stopPropagation()
+                 router.push("/student/enroll")
+               }}>
+                 Inscribirse a Curso
+               </Button>
             </CardContent>
           </Card>
         ) : (
