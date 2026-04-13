@@ -12,9 +12,7 @@ import {
   RotateCcw,
   Trophy,
   Clock,
-  Target,
-  TrendingUp,
-  AlertTriangle
+  Target
 } from "lucide-react"
 import { QuestionType } from "@prisma/client"
 
@@ -95,7 +93,7 @@ export function QuizResults({ attempt, quiz, canRetry, courseId, topicId }: Quiz
     }
   }
 
-  // Calculate anxiety level
+  // Calculate anxiety level (kept for future use, but not displayed to students)
   const getAnxietyLevel = () => {
     const { tabSwitches, consecutiveClicks, missedClicks, scrollReversals } = attempt.anxietyMetrics
     const score = 
@@ -108,8 +106,6 @@ export function QuizResults({ attempt, quiz, canRetry, courseId, topicId }: Quiz
     if (score >= 3) return { level: "Medio", color: "text-yellow-600", bgColor: "bg-yellow-100" }
     return { level: "Bajo", color: "text-green-600", bgColor: "bg-green-100" }
   }
-
-  const anxietyLevel = getAnxietyLevel()
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -152,75 +148,29 @@ export function QuizResults({ attempt, quiz, canRetry, courseId, topicId }: Quiz
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <div className="text-sm text-muted-foreground">Tiempo</div>
-                  <div className="font-medium">{formatTime(attempt.timeSpent)}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <div className="text-sm text-muted-foreground">Correctas</div>
-                  <div className="font-medium">
-                    {attempt.answers.filter(a => a.isCorrect).length}/{quiz.questions.length}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <div className="text-sm text-muted-foreground">Nivel de Ansiedad</div>
-                  <Badge className={anxietyLevel.bgColor + " " + anxietyLevel.color}>
-                    {anxietyLevel.level}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+           <CardContent>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="flex items-center gap-2">
+                 <Clock className="h-5 w-5 text-muted-foreground" />
+                 <div>
+                   <div className="text-sm text-muted-foreground">Tiempo</div>
+                   <div className="font-medium">{formatTime(attempt.timeSpent)}</div>
+                 </div>
+               </div>
+               <div className="flex items-center gap-2">
+                 <Target className="h-5 w-5 text-muted-foreground" />
+                 <div>
+                   <div className="text-sm text-muted-foreground">Correctas</div>
+                   <div className="font-medium">
+                     {attempt.answers.filter(a => a.isCorrect).length}/{quiz.questions.length}
+                   </div>
+                 </div>
+               </div>
+             </div>
+           </CardContent>
+         </Card>
 
-        {/* Anxiety Metrics */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Métricas de Ansiedad
-            </CardTitle>
-            <CardDescription>
-              Estas métricas ayudan a identificar patrones de comportamiento durante el cuestionario
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <div className="text-2xl font-bold">{attempt.anxietyMetrics.tabSwitches}</div>
-                <div className="text-xs text-muted-foreground">Cambios de pestaña</div>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <div className="text-2xl font-bold">{attempt.anxietyMetrics.consecutiveClicks}</div>
-                <div className="text-xs text-muted-foreground">Clicks consecutivos</div>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <div className="text-2xl font-bold">{attempt.anxietyMetrics.missedClicks}</div>
-                <div className="text-xs text-muted-foreground">Clicks perdidos</div>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <div className="text-2xl font-bold">{attempt.anxietyMetrics.idleTimeSeconds}s</div>
-                <div className="text-xs text-muted-foreground">Tiempo inactivo</div>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <div className="text-2xl font-bold">{attempt.anxietyMetrics.scrollReversals}</div>
-                <div className="text-xs text-muted-foreground">Reversiones de scroll</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Question Review */}
+         {/* Question Review */}
         <div className="space-y-4 mb-6">
           <h2 className="text-2xl font-bold">Revisión de Preguntas</h2>
           {quiz.questions.map((question, idx) => {
