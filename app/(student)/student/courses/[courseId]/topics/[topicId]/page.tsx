@@ -77,6 +77,16 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
     redirect(`/student/courses/${courseId}`)
   }
 
+  // Check if student has already marked this topic as read
+  const topicCompletion = await prisma.topicCompletion.findUnique({
+    where: {
+      userId_topicId: {
+        userId: session.user.id,
+        topicId: topicId
+      }
+    }
+  })
+
   // Get published quizzes for this topic with questions
   const quizzes = await prisma.quiz.findMany({
     where: {
@@ -168,6 +178,7 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
            nextTopicUrl={course.topics[topicIndex + 1] 
              ? `/student/courses/${courseId}/topics/${course.topics[topicIndex + 1].id}` 
              : null}
+           isContentRead={topicCompletion?.isRead ?? false}
          />
        </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 import {
   ArrowLeft,
   ArrowRight,
@@ -51,6 +52,7 @@ interface TopicDetailProps {
   quizzes: QuizData[]
   backUrl: string
   nextTopicUrl: string | null
+  isContentRead?: boolean
 }
 
 export function TopicDetailAdapter({ 
@@ -61,18 +63,58 @@ export function TopicDetailAdapter({
   courseId,
   quizzes,
   backUrl,
-  nextTopicUrl
+  nextTopicUrl,
+  isContentRead = false
 }: TopicDetailProps) {
   const router = useRouter()
-  const [contentRead, setContentRead] = useState(false)
+  const { toast } = useToast()
+  const [contentRead, setContentRead] = useState(isContentRead)
+  const [isMarking, setIsMarking] = useState(false)
 
   // Check if all quizzes are passed
   const allQuizzesPassed = quizzes.length > 0 
     ? quizzes.every(q => q.bestAttempt?.passed) 
     : true
 
-  const handleMarkAsRead = () => {
-    setContentRead(true)
+  const handleMarkAsRead = async () => {
+    setIsMarking(true)
+    try {
+      const response = await fetch("/api/topics/mark-read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topicId: topic.id, courseId })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.error || "No se pudo marcar el tema como leído",
+          variant: "destructive"
+        })
+        return
+      }
+
+      const data = await response.json()
+      setContentRead(true)
+      
+      toast({
+        title: "Éxito",
+        description: `Tema marcado como leído. Progreso del curso: ${data.progress}%`
+      })
+
+      // Revalidate the page to refresh progress
+      router.refresh()
+    } catch (error) {
+      console.error("Error marking as read:", error)
+      toast({
+        title: "Error",
+        description: "Error al marcar el tema como leído",
+        variant: "destructive"
+      })
+    } finally {
+      setIsMarking(false)
+    }
   }
 
   const canProceed = quizzes.length === 0 || allQuizzesPassed
@@ -151,9 +193,13 @@ export function TopicDetailAdapter({
                 <p className="text-sm text-muted-foreground">
                   Asegúrate de haber comprendido el material antes de continuar
                 </p>
-                <Button onClick={handleMarkAsRead} className="gap-2">
+                <Button 
+                  onClick={handleMarkAsRead} 
+                  className="gap-2"
+                  disabled={isMarking}
+                >
                   <CheckCircle2 className="h-4 w-4" />
-                  Marcar como Leído
+                  {isMarking ? "Marcando..." : "Marcar como Leído"}
                 </Button>
               </div>
             </CardContent>
