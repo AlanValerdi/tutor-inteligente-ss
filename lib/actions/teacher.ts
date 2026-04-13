@@ -698,3 +698,44 @@ export async function deleteQuestion(questionId: string) {
 
   return { success: true }
 }
+
+
+export async function changeStudentLearningProfile(
+  studentId: string,
+  newProfile: "Visual" | "Auditivo" | "Kinestesico"
+) {
+  const { revalidatePath } = await import('next/cache')
+  
+  const session = await auth()
+  
+  if (!session?.user || session.user.role !== "TEACHER") {
+    throw new Error("No autorizado")
+  }
+
+  // Verify the teacher has at least one course with this student
+  const studentEnrollment = await prisma.enrollment.findFirst({
+    where: {
+      userId: studentId,
+      course: {
+        teacherId: session.user.id
+      }
+    }
+  })
+
+  if (!studentEnrollment) {
+    throw new Error("No tienes acceso a este estudiante")
+  }
+
+  // Update the student's profile globally
+  const updatedUser = await prisma.user.update({
+    where: { id: studentId },
+    data: {
+      studyProfile: newProfile
+    }
+  })
+
+  // Revalidate the student's course pages to refresh the session
+  revalidatePath(`/student/courses`, 'layout')
+
+  return updatedUser
+}

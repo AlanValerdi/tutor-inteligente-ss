@@ -24,7 +24,7 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
     redirect("/dashboard")
   }
 
-  // Verify enrollment
+  // Verify enrollment and get student's current profile
   const enrollment = await prisma.enrollment.findUnique({
     where: {
       userId_courseId: {
@@ -37,6 +37,14 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
   if (!enrollment) {
     redirect("/student/courses") // User not enrolled
   }
+
+  // Get the student's current profile from database (fresh data, not from session JWT)
+  const student = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { studyProfile: true }
+  })
+
+  const currentProfile = student?.studyProfile || session.user.studyProfile || "Visual"
 
   // Get course with topics
   const course = await prisma.course.findUnique({
@@ -78,7 +86,7 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
     <div className="flex flex-col h-full">
       {/* Header with navigation */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
-        <div className="container mx-auto px-4 py-3">
+        <div className="px-8 py-4">
           <Button variant="ghost" asChild className="gap-2">
             <Link href="/student/courses">
               <ArrowLeft className="h-4 w-4" />
@@ -93,6 +101,7 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
         <CourseViewAdapter
           course={courseData}
           courseId={courseId}
+          studentProfile={currentProfile}
         />
       </div>
     </div>

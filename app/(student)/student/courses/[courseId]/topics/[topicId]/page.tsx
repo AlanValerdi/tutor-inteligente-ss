@@ -39,6 +39,14 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
     redirect("/student/courses") // User not enrolled
   }
 
+  // Get the student's current profile from database (fresh data)
+  const student = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { studyProfile: true }
+  })
+
+  const currentProfile = student?.studyProfile || "Visual"
+
   // Get course with topics
   const course = await prisma.course.findUnique({
     where: { id: courseId },
@@ -147,21 +155,21 @@ export default async function StudentTopicPage({ params }: TopicPageProps) {
         </div>
       </div>
 
-      {/* Topic content */}
-      <div className="flex-1 overflow-auto">
-        <TopicDetailAdapter
-          topic={topicData}
-          topicIndex={topicIndex}
-          totalTopics={course.topics.length}
-          profile={enrollment.studyProfile || "Visual"}
-          courseId={courseId}
-          quizzes={quizzesData}
-          backUrl={`/student/courses/${courseId}`}
-          nextTopicUrl={course.topics[topicIndex + 1] 
-            ? `/student/courses/${courseId}/topics/${course.topics[topicIndex + 1].id}` 
-            : null}
-        />
-      </div>
+       {/* Topic content */}
+       <div className="flex-1 overflow-auto">
+         <TopicDetailAdapter
+           topic={topicData}
+           topicIndex={topicIndex}
+           totalTopics={course.topics.length}
+           profile={currentProfile}
+           courseId={courseId}
+           quizzes={quizzesData}
+           backUrl={`/student/courses/${courseId}`}
+           nextTopicUrl={course.topics[topicIndex + 1] 
+             ? `/student/courses/${courseId}/topics/${course.topics[topicIndex + 1].id}` 
+             : null}
+         />
+       </div>
     </div>
   )
 }
