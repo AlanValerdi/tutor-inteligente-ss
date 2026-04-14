@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, Users, MoreVertical, Eye, Edit, Trash2, FileText } from "lucide-react"
+import { BookOpen, Users, MoreVertical, Eye, Edit, Trash2, FileText, ClipboardList } from "lucide-react"
 import { useRouter } from "next/navigation"
 import {
   DropdownMenu,
@@ -143,10 +143,20 @@ export function TeacherCoursesList({ courses }: TeacherCoursesListProps) {
                     variant="outline" 
                     size="sm"
                     className="gap-2"
+                    onClick={() => router.push(`/teacher/courses/${course.id}/quizzes`)}
+                  >
+                    <ClipboardList className="h-4 w-4" />
+                    Cuestionarios
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-2"
                     onClick={() => router.push(`/teacher/courses/${course.id}/topics`)}
                   >
                     <FileText className="h-4 w-4" />
-                    Gestionar Temas
+                    Temas
                   </Button>
                   
                   <DropdownMenu>

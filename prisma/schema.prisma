@@ -86,6 +86,7 @@ model Course {
   teacher      User          @relation("TeacherCourses", fields: [teacherId], references: [id])
   enrollments  Enrollment[]
   topics       Topic[]
+  quizzes      Quiz[]        // Course-level quizzes
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -158,8 +159,11 @@ model Quiz {
   id              String         @id @default(cuid())
   title           String
   description     String?
-  topicId         String
-  topic           Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  // Quiz can be linked to a topic OR a course, but not both
+  topicId         String?        // null = course-level quiz
+  topic           Topic?         @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  courseId        String?        // null = topic-level quiz
+  course          Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
   questions       Question[]
   attempts        QuizAttempt[]
   passingScore    Int            @default(70) // Percentage required to pass
@@ -167,8 +171,13 @@ model Quiz {
   timeLimit       Int?           // Time limit in minutes (null = no limit)
   shuffleQuestions Boolean       @default(false)
   isPublished     Boolean        @default(false)
+  // For course-level quizzes, require completion of all topics?
+  requireAllTopics Boolean       @default(false) // Only applicable if courseId is set
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+
+  @@index([topicId])
+  @@index([courseId])
 }
 
 model Question {

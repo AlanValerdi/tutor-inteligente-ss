@@ -469,13 +469,15 @@ export async function getTopicQuizzes(topicId: string) {
 }
 
 export async function createQuiz(data: {
-  topicId: string
+  topicId?: string
+  courseId?: string
   title: string
   description?: string
   passingScore?: number
   maxAttempts?: number
   timeLimit?: number
   shuffleQuestions?: boolean
+  requireAllTopics?: boolean
 }) {
   const session = await auth()
   
@@ -483,24 +485,49 @@ export async function createQuiz(data: {
     throw new Error("No autorizado")
   }
 
-  const topic = await prisma.topic.findUnique({
-    where: { id: data.topicId },
-    include: { course: true }
-  })
+  // Validate: must have either topicId or courseId, but not both
+  if (!data.topicId && !data.courseId) {
+    throw new Error("Un cuestionario debe estar ligado a un tema o a un curso")
+  }
 
-  if (!topic || topic.course.teacherId !== session.user.id) {
-    throw new Error("Tema no encontrado o no autorizado")
+  if (data.topicId && data.courseId) {
+    throw new Error("Un cuestionario no puede estar ligado a ambos, tema y curso")
+  }
+
+  // If it's a topic-level quiz
+  if (data.topicId) {
+    const topic = await prisma.topic.findUnique({
+      where: { id: data.topicId },
+      include: { course: true }
+    })
+
+    if (!topic || topic.course.teacherId !== session.user.id) {
+      throw new Error("Tema no encontrado o no autorizado")
+    }
+  }
+
+  // If it's a course-level quiz
+  if (data.courseId) {
+    const course = await prisma.course.findUnique({
+      where: { id: data.courseId }
+    })
+
+    if (!course || course.teacherId !== session.user.id) {
+      throw new Error("Curso no encontrado o no autorizado")
+    }
   }
 
   const quiz = await prisma.quiz.create({
     data: {
       topicId: data.topicId,
+      courseId: data.courseId,
       title: data.title,
       description: data.description,
       passingScore: data.passingScore ?? 70,
       maxAttempts: data.maxAttempts,
       timeLimit: data.timeLimit,
       shuffleQuestions: data.shuffleQuestions ?? false,
+      requireAllTopics: data.requireAllTopics ?? false,
       isPublished: false
     }
   })
