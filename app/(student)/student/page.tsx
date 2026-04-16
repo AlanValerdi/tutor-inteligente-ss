@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db"
-import { StudentDashboard } from "@/components/dashboard/student-dashboard"
+import { StudentDashboard } from "@/components/student/student-dashboard"
 
 export default async function StudentDashboardPage() {
   const session = await auth()

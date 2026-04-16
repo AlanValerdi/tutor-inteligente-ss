@@ -21,12 +21,12 @@ export default async function TeacherDashboardPage() {
   const dashboardData = await getTeacherDashboardData()
 
   return (
-    <div className="flex-1 p-6 overflow-auto">
-      <div className="max-w-7xl mx-auto">
+    <div className="flex-1 overflow-auto">
+      <div className="px-8 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Panel del Profesor</h1>
-            <p className="text-gray-600 mt-2">Bienvenido, {session.user.name}</p>
+            <h1 className="mb-1 font-display text-2xl font-bold text-foreground">Panel del Profesor</h1>
+            <p className="text-muted-foreground">Bienvenido, {session.user.name}</p>
           </div>
           <Link href="/teacher/courses/create">
             <Button className="gap-2">

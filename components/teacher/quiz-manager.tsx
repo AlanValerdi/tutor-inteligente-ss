@@ -174,22 +174,24 @@ export function QuizManager({ topic, quizzes: initialQuizzes }: QuizManagerProps
   }
 
   return (
-    <div className="flex-1 p-6 overflow-auto">
-      <div className="max-w-5xl mx-auto">
-        <Button
-          variant="ghost"
-          className="gap-2 mb-6"
-          onClick={() => router.push(`/teacher/courses/${topic.courseId}/topics`)}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Volver a Temas
-        </Button>
-
+    <div className="flex-1 overflow-auto">
+      <div className="px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="mb-6">
+            <Button
+              variant="ghost"
+              className="gap-2"
+              onClick={() => router.push(`/teacher/courses/${topic.courseId}/topics`)}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Volver a Temas
+            </Button>
+          </div>
+
+          <h1 className="mb-1 font-display text-2xl font-bold text-foreground">
             Cuestionarios: {topic.title}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Crea cuestionarios para evaluar el conocimiento de tus estudiantes
           </p>
         </div>

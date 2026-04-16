@@ -14,8 +14,8 @@ export default async function CreateCoursePage() {
   }
 
   return (
-    <div className="flex-1 p-6 overflow-auto">
-      <div className="max-w-3xl mx-auto">
+    <div className="flex-1 overflow-auto">
+      <div className="px-8 py-8">
         <CreateCourseForm />
       </div>
     </div>

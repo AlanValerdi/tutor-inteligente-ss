@@ -19,7 +19,6 @@ interface TeacherSidebarProps {
 export function TeacherSidebar({ currentView, onNavigate, onExit, teacherName, collapsed, onToggle }: TeacherSidebarProps) {
   const navItems = [
     { id: "dashboard" as const, label: "Panel Principal", icon: LayoutDashboard },
-    { id: "courses" as const, label: "Mis Cursos", icon: BookOpen },
     { id: "create-course" as const, label: "Crear Curso", icon: PlusCircle },
     { id: "students" as const, label: "Estudiantes", icon: Users },
     { id: "reports" as const, label: "Reportes", icon: BarChart3 },
@@ -40,7 +39,7 @@ export function TeacherSidebar({ currentView, onNavigate, onExit, teacherName, c
           </div>
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <h2 className="font-display text-sm font-semibold text-white">TutorIA Profesor</h2>
+              <h2 className="font-display text-sm font-semibold text-white">Gestor inteligente</h2>
               <p className="text-xs text-blue-300">Portal Docente</p>
             </div>
           )}

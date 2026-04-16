@@ -25,6 +25,18 @@ function getContentPreview(content: any): string {
   return "Contenido multimedia disponible"
 }
 
+// Helper to check if topic has content for the given profile
+function hasContentForProfile(content: any, profileName: string): boolean {
+  if (!content || typeof content !== 'object' || !Array.isArray(content.blocks)) {
+    return true // If no blocks structure, assume it has content
+  }
+  
+  // Check if any block includes the student's profile
+  return content.blocks.some((block: any) => 
+    Array.isArray(block.profiles) && block.profiles.includes(profileName)
+  )
+}
+
 interface CourseDetails {
   id: string
   title: string
@@ -49,10 +61,16 @@ interface CourseDetails {
 interface CourseViewProps {
   course: CourseDetails
   courseId: string
+  studentProfile?: string
 }
 
-export function CourseViewAdapter({ course, courseId }: CourseViewProps) {
+export function CourseViewAdapter({ course, courseId, studentProfile = "Visual" }: CourseViewProps) {
   const router = useRouter()
+  
+  // Filter topics that have content for the student's profile
+  const availableTopics = course.topics.filter(topic => 
+    hasContentForProfile(topic.content, studentProfile)
+  )
   
   // Mock progress calculation - in a real app you'd track this per user
   const courseProgress = 0 // This should come from enrollment data
@@ -72,7 +90,7 @@ export function CourseViewAdapter({ course, courseId }: CourseViewProps) {
           <div className="flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <BookOpen className="h-4 w-4" />
-              {course.topics.length} temas
+              {availableTopics.length} temas disponibles
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Users className="h-4 w-4" />
@@ -98,7 +116,7 @@ export function CourseViewAdapter({ course, courseId }: CourseViewProps) {
           <div className="absolute left-6 top-0 h-full w-0.5 bg-border" aria-hidden="true" />
           
           <div className="space-y-4">
-            {course.topics
+            {availableTopics
               .sort((a, b) => a.order - b.order)
               .map((topic, index) => {
                 const isCompleted = false // This should come from user progress
@@ -144,7 +162,7 @@ export function CourseViewAdapter({ course, courseId }: CourseViewProps) {
                           </p>
                           
                           <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>Tema {index + 1} de {course.topics.length}</span>
+                            <span>Tema {index + 1} de {availableTopics.length}</span>
                             {isCompleted && (
                               <span className="flex items-center gap-1 text-success">
                                 <CheckCircle2 className="h-3 w-3" />
@@ -169,13 +187,14 @@ export function CourseViewAdapter({ course, courseId }: CourseViewProps) {
           </div>
         </div>
 
-        {course.topics.length === 0 && (
+        {availableTopics.length === 0 && (
           <Card className="border-dashed border-2 border-muted">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="font-semibold text-lg mb-2">Sin contenido disponible</h3>
-              <p className="text-muted-foreground text-center">
-                Este curso aún no tiene temas disponibles. Consulta más tarde.
+              <h3 className="font-semibold text-lg mb-2">Sin contenido disponible para tu perfil</h3>
+              <p className="text-muted-foreground text-center max-w-md">
+                No hay temas disponibles para tu perfil de aprendizaje <strong>{studentProfile}</strong>. 
+                Por favor, espera a que el profesor suba contenido adaptado para tu estilo de aprendizaje.
               </p>
             </CardContent>
           </Card>

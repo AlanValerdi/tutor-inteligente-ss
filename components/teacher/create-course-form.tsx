@@ -69,23 +69,27 @@ export function CreateCourseForm() {
 
   return (
     <div>
-      <Button
-        variant="ghost"
-        className="gap-2 mb-6"
-        onClick={() => router.push("/teacher")}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Volver al Panel
-      </Button>
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="mb-1 font-display text-2xl font-bold text-foreground">Crear Nuevo Curso</h1>
+            <p className="text-muted-foreground">
+              Completa los detalles del curso. Podrás agregar temas después de crearlo.
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="ghost"
+          className="gap-2"
+          onClick={() => router.push("/teacher")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Volver al Panel
+        </Button>
+      </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Crear Nuevo Curso</CardTitle>
-          <CardDescription>
-            Completa los detalles del curso. Podrás agregar temas después de crearlo.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {success && (
             <div className="mb-6 flex items-center gap-3 p-4 rounded-lg border border-success/30 bg-success/5">
               <CheckCircle2 className="h-5 w-5 text-success" />

@@ -44,7 +44,7 @@ export default async function StudentCoursesPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Mis Cursos</h1>
         <p className="text-muted-foreground">
-          Gestiona tus cursos inscritos y continúa tu aprendizaje
+          Gestiona tus cursos inscritos y continúa tu aprendizaje s
         </p>
       </div>
 

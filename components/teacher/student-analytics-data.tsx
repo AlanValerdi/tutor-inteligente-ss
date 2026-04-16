@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { useToast } from "@/components/ui/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { updateStudentProfile, changeStudentLearningProfile } from "@/lib/actions/teacher"
 import { sessionLabels, type Student, type StudyProfile, type AnxietyLevel } from "@/lib/lms-data"
 
 interface StudentAnalyticsDataProps {
@@ -73,6 +75,7 @@ const CHART_COLORS = {
 }
 
 export function StudentAnalyticsData({ students, courses }: StudentAnalyticsDataProps) {
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
   const [sortKey, setSortKey] = useState<SortKey>("name")
   const [sortAsc, setSortAsc] = useState(true)
@@ -81,6 +84,7 @@ export function StudentAnalyticsData({ students, courses }: StudentAnalyticsData
   const [profileDialogStudent, setProfileDialogStudent] = useState<Student | null>(null)
   const [pendingProfileChange, setPendingProfileChange] = useState<StudyProfile | null>(null)
   const [showProfileAlert, setShowProfileAlert] = useState(false)
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
 
   // Anxiety dialog state
   const [anxietyDialogStudent, setAnxietyDialogStudent] = useState<Student | null>(null)
@@ -137,12 +141,39 @@ export function StudentAnalyticsData({ students, courses }: StudentAnalyticsData
     { label: "Prom. Progreso", value: `${avgProgress}%`, icon: TrendingUp, color: "text-success", bg: "bg-success/10" },
   ]
 
-  const handleConfirmProfileChange = () => {
-    if (profileDialogStudent && pendingProfileChange) {
+  const handleConfirmProfileChange = async () => {
+    if (!profileDialogStudent || !pendingProfileChange) return
+    
+    setIsUpdatingProfile(true)
+    try {
+      // Update the student's profile globally in the User table
+      await changeStudentLearningProfile(
+        profileDialogStudent.id,
+        pendingProfileChange
+      )
+      
+      // Update local overrides
       setProfileOverrides((prev) => ({ ...prev, [profileDialogStudent.id]: pendingProfileChange }))
+      
+      // Show success toast
+      toast({
+        title: "Perfil actualizado",
+        description: `El perfil de ${profileDialogStudent.name} ha sido cambiado a ${pendingProfileChange}`,
+        variant: "default",
+      })
+      
+      setShowProfileAlert(false)
+      setPendingProfileChange(null)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el perfil del estudiante",
+        variant: "destructive",
+      })
+      console.error("Error updating profile:", error)
+    } finally {
+      setIsUpdatingProfile(false)
     }
-    setShowProfileAlert(false)
-    setPendingProfileChange(null)
   }
 
   // Build radar data for profile dialog
@@ -482,18 +513,22 @@ export function StudentAnalyticsData({ students, courses }: StudentAnalyticsData
               <span className="font-semibold">{profileDialogStudent && getStudentProfile(profileDialogStudent)}</span> a{" "}
               <span className="font-semibold">{pendingProfileChange}</span>.
               Esto afectara el tipo de contenido que el estudiante recibira. Esta accion puede deshacerse cambiando el perfil nuevamente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingProfileChange(null)}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmProfileChange}>
-              Confirmar Cambio
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+             </AlertDialogDescription>
+           </AlertDialogHeader>
+           <AlertDialogFooter>
+             <AlertDialogCancel onClick={() => setPendingProfileChange(null)} disabled={isUpdatingProfile}>
+               Cancelar
+             </AlertDialogCancel>
+             <AlertDialogAction 
+               onClick={handleConfirmProfileChange}
+               disabled={isUpdatingProfile}
+               className="bg-primary hover:bg-primary/90"
+             >
+               {isUpdatingProfile ? "Actualizando..." : "Confirmar Cambio"}
+             </AlertDialogAction>
+           </AlertDialogFooter>
+         </AlertDialogContent>
+       </AlertDialog>
 
       {/* ---- ANXIETY METRICS DIALOG ---- */}
       <Dialog open={!!anxietyDialogStudent} onOpenChange={(open) => { if (!open) setAnxietyDialogStudent(null) }}>
