@@ -567,41 +567,47 @@ export async function updateQuiz(quizId: string, data: {
   isPublished?: boolean
 }) {
   const session = await auth()
-  
-  if (!session?.user || session.user.role !== "TEACHER") {
-    throw new Error("No autorizado")
-  }
+  if (!session?.user || session.user.role !== "TEACHER") throw new Error("No autorizado")
 
   const quiz = await prisma.quiz.findUnique({
     where: { id: quizId },
-    include: { topic: { include: { course: true } } }
+    include: { 
+      topic: { include: { course: true } }, 
+      course: true 
+    }
   })
 
-  if (!quiz || quiz.topic.course.teacherId !== session.user.id) {
+  // Validación segura: busca el teacherId en el curso directo o en el del tema
+  const quizTeacherId = quiz?.course?.teacherId || quiz?.topic?.course?.teacherId
+
+  if (!quiz || quizTeacherId !== session.user.id) {
     throw new Error("Cuestionario no encontrado o no autorizado")
   }
 
-  const updated = await prisma.quiz.update({
+  return await prisma.quiz.update({
     where: { id: quizId },
     data
   })
-
-  return updated
 }
+
+
 
 export async function deleteQuiz(quizId: string) {
   const session = await auth()
-  
-  if (!session?.user || session.user.role !== "TEACHER") {
-    throw new Error("No autorizado")
-  }
+  if (!session?.user || session.user.role !== "TEACHER") throw new Error("No autorizado")
 
   const quiz = await prisma.quiz.findUnique({
     where: { id: quizId },
-    include: { topic: { include: { course: true } } }
+    include: { 
+      topic: { include: { course: true } }, 
+      course: true 
+    }
   })
 
-  if (!quiz || quiz.topic.course.teacherId !== session.user.id) {
+  
+  const quizTeacherId = quiz?.course?.teacherId || quiz?.topic?.course?.teacherId
+
+  if (!quiz || quizTeacherId !== session.user.id) {
     throw new Error("Cuestionario no encontrado o no autorizado")
   }
 
@@ -618,22 +624,20 @@ export async function deleteQuiz(quizId: string) {
 
 export async function getQuizQuestions(quizId: string) {
   const session = await auth()
-  
-  if (!session?.user || session.user.role !== "TEACHER") {
-    throw new Error("No autorizado")
-  }
+  if (!session?.user || session.user.role !== "TEACHER") throw new Error("No autorizado")
 
   const quiz = await prisma.quiz.findUnique({
     where: { id: quizId },
     include: { 
       topic: { include: { course: true } },
-      questions: {
-        orderBy: { order: "asc" }
-      }
+      course: true,
+      questions: { orderBy: { order: "asc" } }
     }
   })
 
-  if (!quiz || quiz.topic.course.teacherId !== session.user.id) {
+  const quizTeacherId = quiz?.course?.teacherId || quiz?.topic?.course?.teacherId
+
+  if (!quiz || quizTeacherId !== session.user.id) {
     throw new Error("Cuestionario no encontrado o no autorizado")
   }
 
@@ -641,7 +645,8 @@ export async function getQuizQuestions(quizId: string) {
     quiz: {
       id: quiz.id,
       title: quiz.title,
-      topicId: quiz.topicId
+      topicId: quiz.topicId,
+      courseId: quiz.courseId
     },
     questions: quiz.questions
   }
@@ -652,7 +657,7 @@ export async function createQuestion(data: {
   type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER"
   questionText: string
   imageUrl?: string
-  options: any // JSON structure depends on question type
+  options: any 
   points?: number
   explanation?: string
 }) {
@@ -662,18 +667,24 @@ export async function createQuestion(data: {
     throw new Error("No autorizado")
   }
 
+  // Buscamos el quiz para validar la autoría antes de crear la pregunta
   const quiz = await prisma.quiz.findUnique({
     where: { id: data.quizId },
     include: { 
       topic: { include: { course: true } },
-      questions: true
+      course: true,
+      questions: true // Lo necesitamos para calcular el orden (order)
     }
   })
 
-  if (!quiz || quiz.topic.course.teacherId !== session.user.id) {
+  // Validación de seguridad para ambos tipos de Quiz (Topic o Course) [cite: 27, 28, 30]
+  const quizTeacherId = quiz?.course?.teacherId || quiz?.topic?.course?.teacherId
+
+  if (!quiz || quizTeacherId !== session.user.id) {
     throw new Error("Cuestionario no encontrado o no autorizado")
   }
 
+  // Calculamos el siguiente número de orden para la pregunta 
   const nextOrder = quiz.questions.length > 0
     ? Math.max(...quiz.questions.map(q => q.order)) + 1
     : 1
@@ -703,27 +714,32 @@ export async function updateQuestion(questionId: string, data: {
   order?: number
 }) {
   const session = await auth()
-  
-  if (!session?.user || session.user.role !== "TEACHER") {
-    throw new Error("No autorizado")
-  }
+  if (!session?.user || session.user.role !== "TEACHER") throw new Error("No autorizado")
 
   const question = await prisma.question.findUnique({
     where: { id: questionId },
-    include: { quiz: { include: { topic: { include: { course: true } } } } }
+    include: { 
+      quiz: { 
+        include: { 
+          topic: { include: { course: true } },
+          course: true
+        } 
+      } 
+    }
   })
 
-  if (!question || question.quiz.topic.course.teacherId !== session.user.id) {
+  const quizTeacherId = question?.quiz?.course?.teacherId || question?.quiz?.topic?.course?.teacherId
+
+  if (!question || quizTeacherId !== session.user.id) {
     throw new Error("Pregunta no encontrada o no autorizada")
   }
 
-  const updated = await prisma.question.update({
+  return await prisma.question.update({
     where: { id: questionId },
     data
   })
-
-  return updated
 }
+
 
 export async function deleteQuestion(questionId: string) {
   const session = await auth()
@@ -732,15 +748,28 @@ export async function deleteQuestion(questionId: string) {
     throw new Error("No autorizado")
   }
 
+  // Buscamos la pregunta incluyendo toda la cadena de mando (Quiz -> Topic/Course -> Teacher)
   const question = await prisma.question.findUnique({
     where: { id: questionId },
-    include: { quiz: { include: { topic: { include: { course: true } } } } }
+    include: { 
+      quiz: { 
+        include: { 
+          topic: { include: { course: true } },
+          course: true
+        } 
+      } 
+    }
   })
 
-  if (!question || question.quiz.topic.course.teacherId !== session.user.id) {
+  // Navegación segura con encadenamiento opcional para encontrar al profesor
+  const quizTeacherId = question?.quiz?.course?.teacherId || question?.quiz?.topic?.course?.teacherId
+
+  // Validamos que la pregunta exista y que el profesor sea el dueño del curso
+  if (!question || quizTeacherId !== session.user.id) {
     throw new Error("Pregunta no encontrada o no autorizada")
   }
 
+  // Si todo está bien, procedemos a borrar
   await prisma.question.delete({
     where: { id: questionId }
   })

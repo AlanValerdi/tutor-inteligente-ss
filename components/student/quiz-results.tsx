@@ -15,6 +15,7 @@ import {
   Target
 } from "lucide-react"
 import { QuestionType } from "@prisma/client"
+import { invalidateDashboardCache } from "@/hooks/use-dashboard-data"
 
 interface AttemptData {
   id: string
@@ -64,6 +65,12 @@ interface QuizResultsProps {
 
 export function QuizResults({ attempt, quiz, canRetry, courseId, topicId }: QuizResultsProps) {
   const router = useRouter()
+  
+  const handleBackToTopic = async () => {
+    await invalidateDashboardCache(); // Limpia la caché de SWR
+    router.push(`/student/courses/${courseId}/topics/${topicId}`);
+    router.refresh(); // Fuerza a Next.js a pedir datos nuevos al servidor
+  };
 
   // Format time
   const formatTime = (seconds: number | null) => {
@@ -241,13 +248,14 @@ export function QuizResults({ attempt, quiz, canRetry, courseId, topicId }: Quiz
 
         {/* Actions */}
         <div className="flex gap-4">
-          <Button
-            variant="outline"
-            onClick={() => router.push(`/student/courses/${courseId}/topics/${topicId}`)}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver al Tema
-          </Button>
+            {/* Antes decía: onClick={() => router.push(...)} */}
+            <Button
+              variant="outline"
+              onClick={handleBackToTopic} 
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Volver al Tema
+            </Button>
           
           {canRetry && !attempt.passed && (
             <Button

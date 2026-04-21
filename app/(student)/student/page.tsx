@@ -47,18 +47,26 @@ export default async function StudentDashboardPage() {
     orderBy: { enrolledAt: "desc" }
   })
 
-  // Calculate stats
+
+  const enrolledCoursesData = enrollments.map(e => {
+    const totalTopics = e.course._count.topics;
+    const realProgress = totalTopics > 0 
+      ? Math.min(100, Math.round((e.completedTopics / totalTopics) * 100)) 
+      : 0;
+    return { ...e, realProgress };
+  });
+
   const stats = {
     enrolledCourses: enrollments.length,
     totalTopics: enrollments.reduce((acc, e) => acc + e.course._count.topics, 0),
-    averageProgress: enrollments.length > 0 
-      ? Math.round(enrollments.reduce((acc, e) => acc + e.progress, 0) / enrollments.length) 
+    averageProgress: enrolledCoursesData.length > 0 
+      ? Math.round(enrolledCoursesData.reduce((acc, e) => acc + e.realProgress, 0) / enrolledCoursesData.length) 
       : 0,
-    completedCourses: enrollments.filter(e => e.progress === 100).length
+    completedCourses: enrolledCoursesData.filter(e => e.realProgress === 100).length
   }
 
   // Transform enrollments for dashboard
-  const enrolledCourses = enrollments.map(enrollment => ({
+  const enrolledCourses = enrolledCoursesData.map(enrollment => ({
     id: enrollment.id,
     course: {
       id: enrollment.course.id,
@@ -72,7 +80,7 @@ export default async function StudentDashboardPage() {
       topicsCount: enrollment.course._count.topics,
       studentsEnrolled: enrollment.course._count.enrollments
     },
-    progress: enrollment.progress,
+    progress: enrollment.realProgress, // <--- Aquí usamos el progreso real calculado
     enrolledAt: enrollment.enrolledAt
   }))
 

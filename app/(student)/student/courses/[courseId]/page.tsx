@@ -5,6 +5,8 @@ import { CourseViewAdapter } from "@/components/dashboard/course-view-adapter"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface CoursePageProps {
   params: Promise<{
@@ -44,7 +46,7 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
     select: { studyProfile: true }
   })
 
-  const currentProfile = student?.studyProfile || session.user.studyProfile || "Visual"
+  const currentProfile = student?.studyProfile || (session.user as any).studyProfile || "Visual";
 
   // Get course with topics
   const course = await prisma.course.findUnique({
@@ -102,6 +104,10 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
           course={courseData}
           courseId={courseId}
           studentProfile={currentProfile}
+          // Estas líneas son las que activan la barra y quitan los candados:
+          initialProgress={enrollment.progress}
+          completedTopics={enrollment.completedTopics}
+          enrollment={enrollment as any} 
         />
       </div>
     </div>

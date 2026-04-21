@@ -62,18 +62,30 @@ interface CourseViewProps {
   course: CourseDetails
   courseId: string
   studentProfile?: string
+  // AGREGAMOS ESTAS PROPIEDADES:
+  initialProgress?: number
+  completedTopics?: number
+  enrollment?: any;
 }
 
-export function CourseViewAdapter({ course, courseId, studentProfile = "Visual" }: CourseViewProps) {
+export function CourseViewAdapter({ 
+  course, 
+  courseId, 
+  studentProfile = "Visual",
+  initialProgress = 0,
+  completedTopics = 0,
+  enrollment    // Valor que viene de la DB
+}: CourseViewProps) {
   const router = useRouter()
   
-  // Filter topics that have content for the student's profile
   const availableTopics = course.topics.filter(topic => 
     hasContentForProfile(topic.content, studentProfile)
   )
   
-  // Mock progress calculation - in a real app you'd track this per user
-  const courseProgress = 0 // This should come from enrollment data
+const totalAvailableTopics = availableTopics.length;
+  const courseProgress = totalAvailableTopics > 0 
+    ? Math.min(100, Math.round((completedTopics / totalAvailableTopics) * 100)) 
+    : 0;
 
   const handleSelectTopic = (topicId: string) => {
     router.push(`/student/courses/${courseId}/topics/${topicId}`)
@@ -117,12 +129,12 @@ export function CourseViewAdapter({ course, courseId, studentProfile = "Visual" 
           
           <div className="space-y-4">
             {availableTopics
-              .sort((a, b) => a.order - b.order)
-              .map((topic, index) => {
-                const isCompleted = false // This should come from user progress
-                const isCurrentTopic = !isCompleted && index === 0 // First incomplete topic is current
-                const isLocked = !isCompleted && !isCurrentTopic
-
+                 .sort((a, b) => a.order - b.order)
+                .map((topic, index) => {
+                  // CAMBIA ESTAS LÍNEAS:
+                  const isCompleted = index < completedTopics 
+                  const isCurrentTopic = index === completedTopics 
+                  const isLocked = index > completedTopics
                 return (
                   <Card
                     key={topic.id}

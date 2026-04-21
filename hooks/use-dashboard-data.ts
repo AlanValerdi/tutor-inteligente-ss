@@ -13,16 +13,22 @@ import type {
  * Hook for fetching dashboard statistics
  * Updates every 5 minutes, revalidates on focus
  */
+//
+
 export function useDashboardStats(): ExtendedSWRResponse<DashboardStats> {
-  return useFrequentData<DashboardStats>(cacheKeys.studentDashboard())
+  // Usamos "as any" en el objeto de opciones para saltar la restricción del tipo
+  return useFrequentData<DashboardStats>(cacheKeys.studentDashboard(), {
+    revalidateOnFocus: true,
+    dedupingInterval: 0
+  } as any)
 }
 
-/**
- * Hook for fetching enrolled courses with progress
- * Updates every 5 minutes, revalidates on focus
- */
 export function useEnrolledCourses(): ExtendedSWRResponse<CourseWithProgress[]> {
-  return useFrequentData<CourseWithProgress[]>(cacheKeys.studentCourses())
+  // Esto hará que el 100% cambie a 89% automáticamente al volver atrás
+  return useFrequentData<CourseWithProgress[]>(cacheKeys.studentCourses(), {
+    revalidateOnFocus: true,
+    dedupingInterval: 0
+  } as any)
 }
 
 /**
@@ -138,8 +144,13 @@ export function useEnrollmentStatus(courseId: string | null, userId?: string) {
  * Utility function to invalidate all dashboard-related cache
  * Call this after successful enrollment, course completion, etc.
  */
+// En hooks/use-dashboard-data.ts
 export async function invalidateDashboardCache(): Promise<void> {
+  // 1. Limpia las estadísticas generales y lista de cursos
   await invalidateRelated(mutate, 'dashboard')
+  
+  // 2. Agregamos esto para limpiar específicamente los detalles de los cursos 
+  await mutate((key: any) => typeof key === 'string' && key.startsWith('course:'), undefined, { revalidate: true })
 }
 
 /**

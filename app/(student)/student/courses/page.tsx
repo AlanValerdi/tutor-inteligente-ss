@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress"
 import { BookOpen, Users, ArrowRight, Calendar } from "lucide-react"
 import Link from "next/link"
 
+
 export default async function StudentCoursesPage() {
   const session = await auth()
 
@@ -65,7 +66,13 @@ export default async function StudentCoursesPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {enrolledCourses.map((enrollment) => {
             const course = enrollment.course
-            const progress = enrollment.progress
+            
+            // CALCULAMOS EL PROGRESO REAL AQUÍ:
+            // Comparamos lo que el alumno ha hecho contra el total actual de temas
+            const totalTopics = course._count.topics
+            const progress = totalTopics > 0 
+              ? Math.min(100, Math.round((enrollment.completedTopics / totalTopics) * 100)) 
+              : 0
 
             return (
               <Card key={course.id} className="group hover:shadow-md transition-all">
@@ -75,7 +82,7 @@ export default async function StudentCoursesPage() {
                       <BookOpen className="h-5 w-5 text-primary" />
                     </div>
                     <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                      {course._count.topics} temas
+                      {totalTopics} temas
                     </span>
                   </div>
                   <CardTitle className="mt-3 font-display text-base line-clamp-2">
@@ -88,7 +95,7 @@ export default async function StudentCoursesPage() {
                     {course.description || "Continúa aprendiendo con este curso"}
                   </p>
 
-                  {/* Teacher info */}
+                  {/* Info del Instructor */}
                   <div className="mb-4 flex items-center gap-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">
@@ -96,7 +103,7 @@ export default async function StudentCoursesPage() {
                     </span>
                   </div>
 
-                  {/* Enrollment date */}
+                  {/* Fecha de inscripción */}
                   <div className="mb-4 flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">
@@ -104,9 +111,10 @@ export default async function StudentCoursesPage() {
                     </span>
                   </div>
 
-                  {/* Progress */}
+                  {/* Progreso Dinámico */}
                   <div className="mb-2 flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Progreso</span>
+                    {/* Ahora mostrará 88% si el profesor agregó temas nuevos */}
                     <span className="font-medium text-primary">{progress}%</span>
                   </div>
                   <Progress value={progress} className="h-2 mb-4" />

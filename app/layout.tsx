@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Space_Grotesk } from 'next/font/google'
 import { SWRProvider } from '@/components/providers/swr-provider'
 
+
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
@@ -27,6 +28,17 @@ export default function RootLayout({
         <SWRProvider>
           {children}
         </SWRProvider>
+
+        {/* Script para identificar al estudiante en el tracker-service */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (!sessionStorage.getItem('tracker_token')) {
+                sessionStorage.setItem('tracker_token', self.crypto.randomUUID());
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   )

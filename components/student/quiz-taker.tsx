@@ -268,25 +268,28 @@ export function QuizTaker({ quiz, questions, courseId, topicId, userId }: QuizTa
     const answer = answers.find(a => a.questionId === currentQuestion.id)
 
     switch (currentQuestion.type) {
-      case "MULTIPLE_CHOICE":
-        const mcOptions = currentQuestion.options as Array<{ text: string; isCorrect: boolean }>
-        return (
-          <RadioGroup
-            value={answer?.selectedAnswer || ""}
-            onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
-          >
-            <div className="space-y-3">
-              {mcOptions.map((option, idx) => (
-                <div key={idx} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option.text} id={`option-${idx}`} />
-                  <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer">
-                    {option.text}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </RadioGroup>
-        )
+    case "MULTIPLE_CHOICE":
+      const mcOptions = currentQuestion.options as Array<{ text: string; isCorrect: boolean }>
+      return (
+        <RadioGroup
+          value={answer?.selectedAnswer || ""}
+          onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
+        >
+          <div className="space-y-4"> {/* Aumenté un poco el espacio */}
+            {mcOptions.map((option, idx) => (
+              <div key={idx} className="flex items-start space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <RadioGroupItem value={option.text} id={`option-${idx}`} className="mt-1 shrink-0" />
+                <Label 
+                  htmlFor={`option-${idx}`} 
+                  className="flex-1 cursor-pointer text-base leading-relaxed break-words whitespace-normal"
+                >
+                  {option.text}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </RadioGroup>
+      )
 
       case "TRUE_FALSE":
         return (
@@ -371,18 +374,18 @@ export function QuizTaker({ quiz, questions, courseId, topicId, userId }: QuizTa
 
         {/* Question Card */}
         <Card className="mb-6">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <CardTitle className="text-xl mb-2">
-                  {currentQuestion.questionText}
-                </CardTitle>
-                <CardDescription>
-                  Puntos: {currentQuestion.points}
-                </CardDescription>
-              </div>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0"> {/* min-w-0 ayuda a que el flex-1 respete el break-words */}
+              <CardTitle className="text-xl md:text-2xl mb-2 break-words leading-tight">
+                {currentQuestion.questionText}
+              </CardTitle>
+              <CardDescription>
+                Puntos: {currentQuestion.points}
+              </CardDescription>
             </div>
-          </CardHeader>
+          </div>
+        </CardHeader>
           <CardContent>
             {currentQuestion.imageUrl && (
               <div className="mb-6">
@@ -408,27 +411,27 @@ export function QuizTaker({ quiz, questions, courseId, topicId, userId }: QuizTa
             Anterior
           </Button>
 
-          <div className="flex gap-2">
-            {displayQuestions.map((_, idx) => {
-              const hasAnswer = answers[idx]?.selectedAnswer !== null
-              return (
-                <button
-                  key={idx}
-                  onClick={() => goToQuestion(idx)}
-                  className={`w-8 h-8 rounded-full text-sm font-medium transition-colors ${
-                    idx === currentQuestionIndex
-                      ? 'bg-primary text-primary-foreground'
-                      : hasAnswer
-                      ? 'bg-green-100 text-green-900 hover:bg-green-200'
-                      : 'bg-muted hover:bg-muted/80'
-                  }`}
-                >
-                  {idx + 1}
-                </button>
-              )
-            })}
-          </div>
-
+            <div className="flex flex-wrap justify-center gap-2 max-w-full">
+              {displayQuestions.map((_, idx) => {
+                const hasAnswer = answers[idx]?.selectedAnswer !== null
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => goToQuestion(idx)}
+                    className={`w-8 h-8 shrink-0 rounded-full text-sm font-medium transition-colors ${
+                      idx === currentQuestionIndex
+                        ? 'bg-primary text-primary-foreground'
+                        : hasAnswer
+                        ? 'bg-green-100 text-green-900 hover:bg-green-200'
+                        : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    {idx + 1}
+                  </button>
+                )
+              })}
+            </div>
+            
           {currentQuestionIndex < displayQuestions.length - 1 ? (
             <Button
               variant="outline"
