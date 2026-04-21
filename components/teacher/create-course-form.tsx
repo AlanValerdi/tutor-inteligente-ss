@@ -2,69 +2,60 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Plus, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, Plus, CheckCircle2, Copy, Check } from "lucide-react"
 import { createCourse } from "@/lib/actions/teacher"
 
 export function CreateCourseForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState(false)
-  
+  const [createdKey, setCreatedKey] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    enrollKey: ""
   })
-
-  const generateEnrollKey = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    let key = ""
-    for (let i = 0; i < 14; i++) {
-      if (i === 4 || i === 9) {
-        key += "-"
-      } else {
-        key += chars.charAt(Math.floor(Math.random() * chars.length))
-      }
-    }
-    setFormData({ ...formData, enrollKey: key })
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!formData.title || !formData.enrollKey) {
-      setError("El título y la clave de inscripción son obligatorios")
+
+    if (!formData.title) {
+      setError("El título es obligatorio")
       return
     }
 
     setLoading(true)
     setError("")
-    
+
     try {
       const course = await createCourse({
         title: formData.title,
         description: formData.description || undefined,
-        enrollKey: formData.enrollKey
       })
-      
-      setSuccess(true)
-      
-      // Redirect to topic management after 1.5 seconds
+
+      setCreatedKey(course.enrollKey)
+
       setTimeout(() => {
         router.push(`/teacher/courses/${course.id}/topics`)
-      }, 1500)
-      
+      }, 4000)
     } catch (err: any) {
       setError(err.message || "Error al crear el curso")
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleCopy = () => {
+    if (!createdKey) return
+    navigator.clipboard.writeText(createdKey)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
@@ -90,17 +81,30 @@ export function CreateCourseForm() {
 
       <Card>
         <CardContent className="pt-6">
-          {success && (
-            <div className="mb-6 flex items-center gap-3 p-4 rounded-lg border border-success/30 bg-success/5">
-              <CheckCircle2 className="h-5 w-5 text-success" />
-              <div>
-                <p className="text-sm font-medium text-success">
-                  ¡Curso creado exitosamente!
-                </p>
-                <p className="text-xs text-success/80">
-                  Redirigiendo a la gestión de temas...
-                </p>
+          {createdKey && (
+            <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-green-800">¡Curso creado exitosamente!</p>
+                  <p className="text-xs text-green-700">Comparte esta clave con tus estudiantes para que puedan inscribirse.</p>
+                </div>
               </div>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 rounded-md bg-white border border-green-200 px-4 py-2 font-mono text-lg font-semibold tracking-widest text-center text-green-900">
+                  {createdKey}
+                </code>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCopy}
+                  className="shrink-0 border-green-200 hover:bg-green-100"
+                >
+                  {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4 text-green-600" />}
+                </Button>
+              </div>
+              <p className="text-xs text-green-700 text-center">Redirigiendo a gestión de temas…</p>
             </div>
           )}
 
@@ -120,7 +124,7 @@ export function CreateCourseForm() {
                 placeholder="Ej: Introducción a la Programación"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                disabled={loading || success}
+                disabled={loading || !!createdKey}
                 required
               />
             </div>
@@ -133,48 +137,20 @@ export function CreateCourseForm() {
                 rows={4}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                disabled={loading || success}
+                disabled={loading || !!createdKey}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="enrollKey">
-                Clave de Inscripción <span className="text-destructive">*</span>
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="enrollKey"
-                  placeholder="XXXX-XXXX-XXXX"
-                  value={formData.enrollKey}
-                  onChange={(e) => setFormData({ ...formData, enrollKey: e.target.value.toUpperCase() })}
-                  disabled={loading || success}
-                  required
-                  className="font-mono"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={generateEnrollKey}
-                  disabled={loading || success}
-                >
-                  Generar
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Los estudiantes usarán esta clave para inscribirse en el curso
-              </p>
             </div>
 
             <div className="flex items-center gap-3 pt-4">
               <Button
                 type="submit"
-                disabled={loading || success || !formData.title || !formData.enrollKey}
+                disabled={loading || !!createdKey || !formData.title}
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" />
                 {loading ? "Creando..." : "Crear Curso"}
               </Button>
-              
+
               <Button
                 type="button"
                 variant="outline"
@@ -192,8 +168,8 @@ export function CreateCourseForm() {
         <CardContent className="pt-6">
           <h3 className="font-semibold text-sm mb-2">💡 Siguiente paso</h3>
           <p className="text-sm text-muted-foreground">
-            Después de crear el curso, serás redirigido automáticamente a la página de gestión de temas 
-            donde podrás agregar contenido para tus estudiantes.
+            Después de crear el curso, recibirás una clave de inscripción generada automáticamente.
+            Compártela con tus estudiantes para que puedan unirse.
           </p>
         </CardContent>
       </Card>

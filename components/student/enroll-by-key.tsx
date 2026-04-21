@@ -108,7 +108,7 @@ export function EnrollByKey({ onEnrollSuccess, isEnrolling: externalIsEnrolling 
                   autoComplete="off"
                 />
                 <p className="text-xs text-muted-foreground text-center">
-                  Formato: 4 grupos de 4 caracteres separados por guiones
+                  Formato: 3 grupos de 4 caracteres separados por guiones
                 </p>
               </div>
 

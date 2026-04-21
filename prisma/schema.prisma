@@ -37,7 +37,8 @@ model User {
   sessions      Session[]
   courses       Course[]      @relation("TeacherCourses")
   enrollments   Enrollment[]
-  quizAttempts  QuizAttempt[]
+  quizAttempts         QuizAttempt[]
+  interactionSessions  InteractionSession[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -84,9 +85,10 @@ model Course {
   isPublished  Boolean       @default(false)
   teacherId    String
   teacher      User          @relation("TeacherCourses", fields: [teacherId], references: [id])
-  enrollments  Enrollment[]
-  topics       Topic[]
-  quizzes      Quiz[]        // Course-level quizzes
+  enrollments          Enrollment[]
+  topics               Topic[]
+  quizzes              Quiz[]        // Course-level quizzes
+  interactionSessions  InteractionSession[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -129,8 +131,9 @@ model Topic {
   content           Json
   courseId          String
   course            Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  quizzes           Quiz[]
-  completions       TopicCompletion[]
+  quizzes              Quiz[]
+  completions          TopicCompletion[]
+  interactionSessions  InteractionSession[]
   order             Int
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
@@ -153,6 +156,17 @@ enum QuestionType {
   MULTIPLE_CHOICE
   TRUE_FALSE
   SHORT_ANSWER
+}
+
+enum ResourceType {
+  Video
+  Audio
+  Diapositiva
+  Quiz
+  JuegoInteractivo
+  ImagenInteractiva
+  Simulacion
+  DiapositivaAdicional
 }
 
 model Quiz {
@@ -219,4 +233,99 @@ model QuizAttempt {
   missedClicks    Int            @default(0)
   idleTimeSeconds Int            @default(0)
   scrollReversals Int            @default(0)
+}
+
+// ── Tracker ────────────────────────────────────────────────────────────────
+
+// Una sesión por visita a un topic
+model InteractionSession {
+  id                String                @id @default(cuid())
+  userId            String
+  user              User                  @relation(fields: [userId], references: [id])
+  topicId           String
+  topic             Topic                 @relation(fields: [topicId], references: [id])
+  courseId          String
+  course            Course                @relation(fields: [courseId], references: [id])
+  sessionNumber     Int                   @default(1)
+
+  // Métricas globales de ansiedad conductual
+  totalTime         Float                 @default(0)   // segundos totales en el topic
+  idleTime          Float                 @default(0)   // segundos sin actividad
+  tabSwitches       Int                   @default(0)   // cambios de pestaña
+  missedClicks      Int                   @default(0)   // clics en zonas no interactivas
+  scrollReversals   Int                   @default(0)   // veces que scrolleó hacia arriba
+  consecutiveClicks Int                   @default(0)   // clics rápidos consecutivos (<500ms)
+  anxietyLevel      AnxietyLevel?
+
+  resources         ResourceInteraction[]
+  createdAt         DateTime              @default(now())
+
+  @@index([userId])
+  @@index([topicId])
+  @@index([courseId])
+}
+
+// Una fila por tipo de recurso dentro de la sesión
+model ResourceInteraction {
+  id             String             @id @default(cuid())
+  sessionId      String
+  session        InteractionSession @relation(fields: [sessionId], references: [id])
+  resourceType   ResourceType
+  resourceId     String
+  timeOnResource Float              @default(0)
+  completed      Boolean            @default(false)
+
+  // ── Video / Audio ──────────────────────────────────────────────
+  percentageWatched    Float?
+  timeWatched          Float?
+  timesPaused          Int?
+  timesReplayed        Int?
+
+  // ── Diapositiva ────────────────────────────────────────────────
+  totalSlides          Int?
+  slidesViewed         Int?
+  percentageViewed     Float?
+  timesReviewed        Int?
+  zoomUsed             Boolean?
+
+  // ── Quiz ───────────────────────────────────────────────────────
+  // [{questionId: string, seconds: number}]
+  timePerQuestion      Json?
+  correctAnswers       Int?
+  incorrectAnswers     Int?
+  // [{questionId: string, attempts: number}]
+  attemptsPerQuestion  Json?
+
+  // ── Juego interactivo ──────────────────────────────────────────
+  gameCompleted        Boolean?
+  timesPlayed          Int?
+  helpUsed             Boolean?
+  correctResponses     Int?
+  incorrectResponses   Int?
+  completionPercent    Float?
+
+  // ── Imagen interactiva ─────────────────────────────────────────
+  zonesMarked          Int?
+  visualAidsUsed       Boolean?
+  attemptsImage        Int?
+  correctIdentifications Int?
+
+  // ── Simulación ─────────────────────────────────────────────────
+  dataSelected         Json?
+  simulationChanges    Int?
+  attempts             Int?
+  toolsUsed            Json?
+  solutionPrecision    Float?
+
+  // ── Diapositiva adicional ──────────────────────────────────────
+  modifiedCaseResolved Boolean?
+  visualSupportUsed    Boolean?
+  reflectionTime       Float?
+  errorsIdentified     Int?
+  reflectionLevel      Int?
+
+  createdAt            DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([resourceType])
 }

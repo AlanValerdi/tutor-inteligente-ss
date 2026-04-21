@@ -75,22 +75,44 @@ export async function getTeacherDashboardData() {
   }
 }
 
+function generateEnrollKey(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  let key = ""
+  for (let i = 0; i < 14; i++) {
+    if (i === 4 || i === 9) {
+      key += "-"
+    } else {
+      key += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+  }
+  return key
+}
+
 export async function createCourse(data: {
   title: string
   description?: string
-  enrollKey: string
 }) {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
+  }
+
+  // Generar clave única — reintentar si hay colisión
+  let enrollKey = generateEnrollKey()
+  let attempts = 0
+  while (attempts < 5) {
+    const existing = await prisma.course.findUnique({ where: { enrollKey } })
+    if (!existing) break
+    enrollKey = generateEnrollKey()
+    attempts++
   }
 
   const course = await prisma.course.create({
     data: {
       title: data.title,
       description: data.description,
-      enrollKey: data.enrollKey,
+      enrollKey,
       teacherId: session.user.id
     }
   })

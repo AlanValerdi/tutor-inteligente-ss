@@ -5,25 +5,26 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-type AdminView = "dashboard" | "users" | "courses" | "reports" | "settings"
+const navItems = [
+  { path: "/admin",          label: "Panel Principal", icon: LayoutDashboard, exact: true },
+  { path: "/admin/users",    label: "Usuarios",        icon: Users,           exact: false },
+  { path: "/admin/courses",  label: "Cursos",          icon: BookOpen,        exact: false },
+  { path: "/admin/reports",  label: "Reportes",        icon: BarChart3,       exact: false },
+  { path: "/admin/settings", label: "Configuración",   icon: Settings,        exact: false },
+]
 
 interface AdminSidebarProps {
-  currentView: AdminView
-  onNavigate: (view: AdminView) => void
+  currentPath: string
+  onNavigate: (path: string) => void
   onExit: () => void
   adminName: string
   collapsed: boolean
   onToggle: () => void
 }
 
-export function AdminSidebar({ currentView, onNavigate, onExit, adminName, collapsed, onToggle }: AdminSidebarProps) {
-  const navItems = [
-    { id: "dashboard" as const, label: "Panel Principal", icon: LayoutDashboard },
-    { id: "users" as const, label: "Usuarios", icon: Users },
-    { id: "courses" as const, label: "Cursos", icon: BookOpen },
-    { id: "reports" as const, label: "Reportes", icon: BarChart3 },
-    { id: "settings" as const, label: "Configuración", icon: Settings },
-  ]
+export function AdminSidebar({ currentPath, onNavigate, onExit, adminName, collapsed, onToggle }: AdminSidebarProps) {
+  const isActive = (item: typeof navItems[0]) =>
+    item.exact ? currentPath === item.path : currentPath.startsWith(item.path)
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -62,14 +63,15 @@ export function AdminSidebar({ currentView, onNavigate, onExit, adminName, colla
         <nav className="flex-1 px-3 py-2">
           <ul className="flex flex-col gap-1" role="list">
             {navItems.map((item) => {
+              const active = isActive(item)
               const btn = (
                 <button
                   type="button"
-                  onClick={() => onNavigate(item.id)}
+                  onClick={() => onNavigate(item.path)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     collapsed && "justify-center px-0",
-                    currentView === item.id
+                    active
                       ? "bg-violet-700 text-white"
                       : "text-violet-200 hover:bg-violet-800 hover:text-white"
                   )}
@@ -80,7 +82,7 @@ export function AdminSidebar({ currentView, onNavigate, onExit, adminName, colla
               )
 
               return (
-                <li key={item.id}>
+                <li key={item.path}>
                   {collapsed ? (
                     <Tooltip>
                       <TooltipTrigger asChild>{btn}</TooltipTrigger>
