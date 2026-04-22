@@ -37,10 +37,29 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { updateStudentProfile, changeStudentLearningProfile } from "@/lib/actions/teacher"
-import { sessionLabels, type Student, type StudyProfile, type AnxietyLevel } from "@/lib/lms-data"
+import { sessionLabels, type StudyProfile, type AnxietyLevel, type AnxietyMetrics } from "@/lib/lms-data"
+
+interface CourseEnrollmentData {
+  courseId: string
+  courseTitle: string
+  averageScore: number
+  progress: number
+  anxietyLevel: AnxietyLevel
+}
+
+interface StudentData {
+  id: string
+  name: string
+  avatar: string
+  profile: StudyProfile
+  anxietyLevel: AnxietyLevel
+  enrollments: CourseEnrollmentData[]
+  profileScores: { Visual: number; Auditivo: number; Kinestesico: number }
+  anxietyMetrics: AnxietyMetrics
+}
 
 interface StudentAnalyticsDataProps {
-  students: any[]
+  students: StudentData[]
   courses: { id: string; title: string }[]
 }
 
@@ -81,20 +100,30 @@ export function StudentAnalyticsData({ students, courses }: StudentAnalyticsData
   const [sortAsc, setSortAsc] = useState(true)
 
   // Profile dialog state
-  const [profileDialogStudent, setProfileDialogStudent] = useState<Student | null>(null)
+  const [profileDialogStudent, setProfileDialogStudent] = useState<StudentData | null>(null)
   const [pendingProfileChange, setPendingProfileChange] = useState<StudyProfile | null>(null)
   const [showProfileAlert, setShowProfileAlert] = useState(false)
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
 
   // Anxiety dialog state
-  const [anxietyDialogStudent, setAnxietyDialogStudent] = useState<Student | null>(null)
+  const [anxietyDialogStudent, setAnxietyDialogStudent] = useState<StudentData | null>(null)
 
   // Local student overrides for profile changes
   const [profileOverrides, setProfileOverrides] = useState<Record<string, StudyProfile>>({})
 
-  const getStudentProfile = (student: Student): StudyProfile => {
+  const getStudentProfile = (student: StudentData): StudyProfile => {
     return profileOverrides[student.id] ?? student.profile
   }
+
+  const avgEnrollmentScore = (s: StudentData) =>
+    s.enrollments.length > 0
+      ? s.enrollments.reduce((acc, e) => acc + e.averageScore, 0) / s.enrollments.length
+      : 0
+
+  const avgEnrollmentProgress = (s: StudentData) =>
+    s.enrollments.length > 0
+      ? s.enrollments.reduce((acc, e) => acc + e.progress, 0) / s.enrollments.length
+      : 0
 
   const filteredStudents = students
     .filter((s) => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -104,12 +133,12 @@ export function StudentAnalyticsData({ students, courses }: StudentAnalyticsData
         case "name":
           return dir * a.name.localeCompare(b.name)
         case "score":
-          return dir * (a.averageScore - b.averageScore)
+          return dir * (avgEnrollmentScore(a) - avgEnrollmentScore(b))
         case "progress":
-          return dir * (a.progress - b.progress)
+          return dir * (avgEnrollmentProgress(a) - avgEnrollmentProgress(b))
         case "anxiety": {
           const order: Record<AnxietyLevel, number> = { Bajo: 0, Medio: 1, Alto: 2 }
-          return dir * (order[a.anxietyLevel as AnxietyLevel] - order[b.anxietyLevel as AnxietyLevel])
+          return dir * (order[a.anxietyLevel] - order[b.anxietyLevel])
         }
         default:
           return 0
@@ -126,12 +155,13 @@ export function StudentAnalyticsData({ students, courses }: StudentAnalyticsData
   }
 
   const totalStudents = students.length
-  const avgScore = totalStudents > 0 
-    ? Math.round(students.reduce((acc, s) => acc + s.averageScore, 0) / totalStudents)
+  const allEnrollments = students.flatMap((s) => s.enrollments)
+  const avgScore = allEnrollments.length > 0
+    ? Math.round(allEnrollments.reduce((acc, e) => acc + e.averageScore, 0) / allEnrollments.length)
     : 0
   const highAnxiety = students.filter((s) => s.anxietyLevel === "Alto").length
-  const avgProgress = totalStudents > 0
-    ? Math.round(students.reduce((acc, s) => acc + s.progress, 0) / totalStudents)
+  const avgProgress = allEnrollments.length > 0
+    ? Math.round(allEnrollments.reduce((acc, e) => acc + e.progress, 0) / allEnrollments.length)
     : 0
 
   const stats = [
@@ -177,21 +207,21 @@ export function StudentAnalyticsData({ students, courses }: StudentAnalyticsData
   }
 
   // Build radar data for profile dialog
-  const getProfileRadarData = (student: Student) => [
+  const getProfileRadarData = (student: StudentData) => [
     { profile: "Visual", value: student.profileScores.Visual },
     { profile: "Auditivo", value: student.profileScores.Auditivo },
     { profile: "Kinestesico", value: student.profileScores.Kinestesico },
   ]
 
   // Build bar data for profile comparison
-  const getProfileBarData = (student: Student) => [
+  const getProfileBarData = (student: StudentData) => [
     { name: "Visual", puntaje: student.profileScores.Visual, fill: CHART_COLORS.accent },
     { name: "Auditivo", puntaje: student.profileScores.Auditivo, fill: CHART_COLORS.primary },
     { name: "Kinestesico", puntaje: student.profileScores.Kinestesico, fill: CHART_COLORS.warning },
   ]
 
   // Build line data for anxiety metrics
-  const getAnxietyLineData = (student: Student) =>
+  const getAnxietyLineData = (student: StudentData) =>
     sessionLabels.map((label, i) => ({
       session: label,
       cambiosPestana: student.anxietyMetrics.tabSwitches[i],
@@ -262,17 +292,7 @@ export function StudentAnalyticsData({ students, courses }: StudentAnalyticsData
                       </Button>
                     </th>
                     <th className="px-6 py-3 text-left">
-                      <Button variant="ghost" size="sm" className="gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground -ml-3" onClick={() => toggleSort("score")}>
-                        Prom. Puntaje <ArrowUpDown className="h-3 w-3" />
-                      </Button>
-                    </th>
-                    <th className="px-6 py-3 text-left">
-                      <Button variant="ghost" size="sm" className="gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground -ml-3" onClick={() => toggleSort("progress")}>
-                        Progreso <ArrowUpDown className="h-3 w-3" />
-                      </Button>
-                    </th>
-                    <th className="px-6 py-3 text-left">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cursos</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cursos / Rendimiento</span>
                     </th>
                   </tr>
                 </thead>
@@ -326,29 +346,23 @@ export function StudentAnalyticsData({ students, courses }: StudentAnalyticsData
                         </td>
 
                         <td className="px-6 py-4">
-                          <span className={`text-sm font-semibold ${student.averageScore >= 85 ? "text-success" : student.averageScore >= 70 ? "text-warning-foreground" : "text-destructive"
-                            }`}>
-                            {student.averageScore}%
-                          </span>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <Progress value={student.progress} className="h-2 w-24" />
-                            <span className="text-sm text-muted-foreground">{student.progress}%</span>
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1">
-                            {student.enrolledCourses.map((courseId: string) => {
-                              const course = courses.find((c) => c.id === courseId)
-                              return course ? (
-                                <span key={courseId} className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                                  {course.title.split(" ")[0]}
+                          <div className="flex flex-col gap-2.5">
+                            {student.enrollments.map((enrollment) => (
+                              <div key={enrollment.courseId} className="flex items-center gap-2">
+                                <span className="w-32 truncate text-xs font-medium text-muted-foreground" title={enrollment.courseTitle}>
+                                  {enrollment.courseTitle}
                                 </span>
-                              ) : null
-                            })}
+                                <span className={`w-9 text-right text-xs font-semibold ${
+                                  enrollment.averageScore >= 85 ? "text-success"
+                                  : enrollment.averageScore >= 70 ? "text-warning-foreground"
+                                  : "text-destructive"
+                                }`}>
+                                  {enrollment.averageScore}%
+                                </span>
+                                <Progress value={enrollment.progress} className="h-1.5 w-20" />
+                                <span className="w-8 text-xs text-muted-foreground">{enrollment.progress}%</span>
+                              </div>
+                            ))}
                           </div>
                         </td>
                       </tr>

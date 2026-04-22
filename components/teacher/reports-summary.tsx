@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { AlertTriangle, Users, BookOpen, TrendingUp } from "lucide-react"
 
 interface QuizAttempt {
@@ -76,11 +76,11 @@ export function ReportsSummary({ courses, quizAttempts }: ReportsSummaryProps) {
   }
 
   const metricsData = [
-    { name: "Cambios de Pestaña", value: avgMetrics.tabSwitches },
-    { name: "Clicks Consecutivos", value: avgMetrics.consecutiveClicks },
-    { name: "Clicks Perdidos", value: avgMetrics.missedClicks },
-    { name: "Tiempo Inactivo (s)", value: avgMetrics.idleTimeSeconds },
-    { name: "Reversiones Scroll", value: avgMetrics.scrollReversals }
+    { name: "C. Pestaña", value: avgMetrics.tabSwitches },
+    { name: "C. Consecutivos", value: avgMetrics.consecutiveClicks },
+    { name: "C. Perdidos", value: avgMetrics.missedClicks },
+    { name: "T. Inactivo (s)", value: avgMetrics.idleTimeSeconds },
+    { name: "Rev. Scroll", value: avgMetrics.scrollReversals }
   ]
 
   return (
@@ -168,16 +168,17 @@ export function ReportsSummary({ courses, quizAttempts }: ReportsSummaryProps) {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={80}
-                  fill="#8884d8"
+                  outerRadius={100}
                   dataKey="value"
                 >
                   {anxietyDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value, name) => [value, name]} />
+                <Legend
+                  formatter={(value, entry: any) => `${value}: ${entry.payload.value}`}
+                />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -193,9 +194,9 @@ export function ReportsSummary({ courses, quizAttempts }: ReportsSummaryProps) {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={metricsData}>
+              <BarChart data={metricsData} margin={{ top: 5, right: 10, bottom: 20, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} interval={0} />
+                <XAxis dataKey="name" angle={-30} textAnchor="end" height={60} interval={0} tick={{ fontSize: 11 }} />
                 <YAxis />
                 <Tooltip />
                 <Bar dataKey="value" fill="#8884d8" />

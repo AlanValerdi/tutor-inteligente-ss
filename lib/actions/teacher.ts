@@ -223,65 +223,88 @@ export async function getStudentAnalytics() {
     }
   })
 
-  // Transform data for the analytics component
-  const students = enrollments.map(enrollment => ({
-    id: enrollment.user.id,
-    name: enrollment.user.name || enrollment.user.email,
-    avatar: enrollment.user.name 
-      ? enrollment.user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-      : enrollment.user.email.slice(0, 2).toUpperCase(),
-    profile: enrollment.studyProfile || 'Visual',
-    anxietyLevel: enrollment.anxietyLevel,
-    averageScore: enrollment.averageScore,
-    progress: enrollment.progress,
-    enrolledCourses: [enrollment.course.id],
-    profileScores: {
-      Visual: enrollment.visualScore,
-      Auditivo: enrollment.auditivoScore,
-      Kinestesico: enrollment.kinestesicoScore
-    },
+  const anxietyOrder: Record<string, number> = { Bajo: 0, Medio: 1, Alto: 2 }
+
+  type StudentEntry = {
+    id: string
+    name: string
+    avatar: string
+    profile: string
+    anxietyLevel: string
+    enrollments: Array<{
+      courseId: string
+      courseTitle: string
+      averageScore: number
+      progress: number
+      anxietyLevel: string
+    }>
+    profileScores: { Visual: number; Auditivo: number; Kinestesico: number }
     anxietyMetrics: {
+      tabSwitches: number[]
+      consecutiveClicks: number[]
+      missedClicks: number[]
+      timePerQuestion: number[]
+      idleTime: number[]
+      scrollReversals: number[]
+    }
+  }
+
+  const studentMap = new Map<string, StudentEntry>()
+
+  for (const enrollment of enrollments) {
+    const userId = enrollment.user.id
+    const metrics = {
       tabSwitches: enrollment.tabSwitches ? (enrollment.tabSwitches as number[]) : Array(10).fill(0),
       consecutiveClicks: enrollment.consecutiveClicks ? (enrollment.consecutiveClicks as number[]) : Array(10).fill(0),
       missedClicks: enrollment.missedClicks ? (enrollment.missedClicks as number[]) : Array(10).fill(0),
       timePerQuestion: enrollment.timePerQuestion ? (enrollment.timePerQuestion as number[]) : Array(10).fill(0),
       idleTime: enrollment.idleTime ? (enrollment.idleTime as number[]) : Array(10).fill(0),
-      scrollReversals: enrollment.scrollReversals ? (enrollment.scrollReversals as number[]) : Array(10).fill(0)
+      scrollReversals: enrollment.scrollReversals ? (enrollment.scrollReversals as number[]) : Array(10).fill(0),
     }
-  }))
+    const courseEnrollment = {
+      courseId: enrollment.course.id,
+      courseTitle: enrollment.course.title,
+      averageScore: enrollment.averageScore,
+      progress: enrollment.progress,
+      anxietyLevel: enrollment.anxietyLevel,
+    }
 
-  // Group students by unique user ID to avoid duplicates
-  const uniqueStudents = Array.from(
-    new Map(students.map(s => [s.id, s])).values()
-  )
-
-  // Aggregate enrolled courses for each student
-  const studentMap = new Map<string, typeof students[0]>()
-  
-  enrollments.forEach(enrollment => {
-    const existing = studentMap.get(enrollment.user.id)
+    const existing = studentMap.get(userId)
     if (existing) {
-      if (!existing.enrolledCourses.includes(enrollment.course.id)) {
-        existing.enrolledCourses.push(enrollment.course.id)
+      existing.enrollments.push(courseEnrollment)
+      // Mantener el nivel de ansiedad más severo y sus métricas asociadas
+      if (anxietyOrder[enrollment.anxietyLevel] > anxietyOrder[existing.anxietyLevel]) {
+        existing.anxietyLevel = enrollment.anxietyLevel
+        existing.anxietyMetrics = metrics
       }
     } else {
-      const student = students.find(s => s.id === enrollment.user.id)
-      if (student) {
-        studentMap.set(enrollment.user.id, { ...student })
-      }
-    }
-  })
+      const name = enrollment.user.name || enrollment.user.email
+      const avatar = enrollment.user.name
+        ? enrollment.user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+        : enrollment.user.email.slice(0, 2).toUpperCase()
 
-  const finalStudents = Array.from(studentMap.values())
+      studentMap.set(userId, {
+        id: userId,
+        name,
+        avatar,
+        profile: enrollment.studyProfile || 'Visual',
+        anxietyLevel: enrollment.anxietyLevel,
+        enrollments: [courseEnrollment],
+        profileScores: {
+          Visual: enrollment.visualScore,
+          Auditivo: enrollment.auditivoScore,
+          Kinestesico: enrollment.kinestesicoScore,
+        },
+        anxietyMetrics: metrics,
+      })
+    }
+  }
 
   return {
-    students: finalStudents,
+    students: Array.from(studentMap.values()),
     courses: await prisma.course.findMany({
       where: { teacherId },
-      select: {
-        id: true,
-        title: true
-      }
+      select: { id: true, title: true }
     })
   }
 }

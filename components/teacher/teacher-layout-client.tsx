@@ -18,6 +18,7 @@ export function TeacherLayoutClient({ children, teacherName }: TeacherLayoutProp
   // Determine current view based on pathname
   const getCurrentView = (): "dashboard" | "courses" | "create-course" | "students" | "reports" => {
     if (pathname?.includes("/analytics")) return "students"
+    if (pathname?.includes("/reports")) return "reports"
     if (pathname?.includes("/courses/create")) return "create-course"
     if (pathname?.includes("/courses")) return "courses"
     return "dashboard"
