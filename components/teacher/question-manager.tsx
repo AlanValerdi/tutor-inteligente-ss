@@ -245,19 +245,19 @@ export function QuestionManager({ quiz, questions: initialQuestions }: QuestionM
     const { type, questionText, options, imageUrl, points, explanation } = question
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 overflow-hidden min-w-0">
         <div className="flex items-start justify-between">
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="outline">{getQuestionTypeLabel(type)}</Badge>
               <Badge variant="secondary">{points} {points === 1 ? 'punto' : 'puntos'}</Badge>
             </div>
-            <p className="font-medium text-sm mb-2">{questionText}</p>
+            <p className="font-medium text-sm mb-2 line-clamp-2 break-words">{questionText}</p>
             {imageUrl && (
-              <div className="mb-3 p-2 border rounded-lg bg-muted/30">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <ImageIcon className="h-3 w-3" />
-                  <span className="truncate">{imageUrl}</span>
+              <div className="mb-3 p-2 border rounded-lg bg-muted/30 overflow-hidden">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+                  <ImageIcon className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate break-all">{imageUrl}</span>
                 </div>
               </div>
             )}
@@ -277,23 +277,23 @@ export function QuestionManager({ quiz, questions: initialQuestions }: QuestionM
         </div>
 
         {/* Options Preview */}
-        <div className="pl-4 space-y-2">
+        <div className="pl-4 space-y-2 min-w-0">
           {type === "MULTIPLE_CHOICE" && (
             <div className="space-y-2">
               {(options as MultipleChoiceOption[]).map((opt, i) => (
                 <div 
-                  key={i} 
-                  className={`flex items-center gap-2 p-2 rounded text-xs ${
-                    opt.isCorrect ? 'bg-success/10 border border-success/20' : 'bg-muted/30'
-                  }`}
-                >
-                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                    opt.isCorrect ? 'border-success bg-success' : 'border-muted-foreground'
-                  }`}>
-                    {opt.isCorrect && <CheckCircle2 className="h-3 w-3 text-white" />}
-                  </div>
-                  <span>{opt.text}</span>
-                </div>
+                   key={i} 
+                   className={`flex items-center gap-2 p-2 rounded text-xs overflow-hidden ${
+                     opt.isCorrect ? 'bg-success/10 border border-success/20' : 'bg-muted/30'
+                   }`}
+                 >
+                   <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                     opt.isCorrect ? 'border-success bg-success' : 'border-muted-foreground'
+                   }`}>
+                     {opt.isCorrect && <CheckCircle2 className="h-3 w-3 text-white" />}
+                   </div>
+                   <span className="truncate break-words">{opt.text}</span>
+                 </div>
               ))}
             </div>
           )}
@@ -318,23 +318,23 @@ export function QuestionManager({ quiz, questions: initialQuestions }: QuestionM
           {type === "SHORT_ANSWER" && (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Respuestas aceptadas:</p>
-              {(options as { acceptedAnswers: string[] }).acceptedAnswers.map((ans, i) => (
-                <div key={i} className="flex items-center gap-2 p-2 rounded text-xs bg-success/10 border border-success/20">
-                  <CheckCircle2 className="h-3 w-3 text-success" />
-                  <span>{ans}</span>
-                </div>
-              ))}
+               {(options as { acceptedAnswers: string[] }).acceptedAnswers.map((ans, i) => (
+                 <div key={i} className="flex items-center gap-2 p-2 rounded text-xs bg-success/10 border border-success/20 overflow-hidden">
+                   <CheckCircle2 className="h-3 w-3 text-success flex-shrink-0" />
+                   <span className="truncate break-words">{ans}</span>
+                 </div>
+               ))}
             </div>
           )}
         </div>
 
         {explanation && (
-          <div className="pl-4 p-3 rounded-lg bg-blue-50 border border-blue-200">
+          <div className="pl-4 p-3 rounded-lg bg-blue-50 border border-blue-200 overflow-hidden">
             <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
-              <div>
+              <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="min-w-0">
                 <p className="text-xs font-medium text-blue-900">Explicación:</p>
-                <p className="text-xs text-blue-800 mt-1">{explanation}</p>
+                <p className="text-xs text-blue-800 mt-1 line-clamp-3 break-words">{explanation}</p>
               </div>
             </div>
           </div>
@@ -344,8 +344,9 @@ export function QuestionManager({ quiz, questions: initialQuestions }: QuestionM
   }
 
   return (
-    <div className="flex-1 p-6 overflow-auto">
-      <div className="max-w-5xl mx-auto">
+    <div className="flex-1">
+      <div className="px-8 py-8 overflow-auto h-full">
+        <div className="max-w-5xl mx-auto">
         <Button
           variant="ghost"
           className="gap-2 mb-6"
@@ -626,12 +627,12 @@ export function QuestionManager({ quiz, questions: initialQuestions }: QuestionM
               </div>
               {initialQuestions.map((question, index) => (
                 <Card key={question.id} className="hover:border-primary/30 transition-colors">
-                  <CardContent className="p-6">
+                  <CardContent className="px-8 py-8">
                     <div className="flex items-start gap-4">
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm">
                         {index + 1}
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 ">
                         {renderQuestionPreview(question)}
                       </div>
                     </div>
@@ -665,6 +666,7 @@ export function QuestionManager({ quiz, questions: initialQuestions }: QuestionM
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   )
 }
