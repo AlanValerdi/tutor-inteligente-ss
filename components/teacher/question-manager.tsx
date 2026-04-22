@@ -61,7 +61,8 @@ interface QuestionManagerProps {
   quiz: {
     id: string
     title: string
-    topicId: string
+    topicId: string | null
+    courseId?: string | null
   }
   questions: Question[]
 }
@@ -348,7 +349,11 @@ export function QuestionManager({ quiz, questions: initialQuestions }: QuestionM
         <Button
           variant="ghost"
           className="gap-2 mb-6"
-          onClick={() => router.push(`/teacher/topics/${quiz.topicId}/quizzes`)}
+          onClick={() =>
+            quiz.topicId
+              ? router.push(`/teacher/topics/${quiz.topicId}/quizzes`)
+              : router.push(`/teacher/courses/${quiz.courseId}/quizzes`)
+          }
         >
           <ArrowLeft className="h-4 w-4" />
           Volver a Cuestionarios

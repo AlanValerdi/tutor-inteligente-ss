@@ -11,8 +11,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { PlusCircle, BookOpen, Trash2, Eye, Edit2 } from "lucide-react"
-import { createQuiz, deleteQuiz } from "@/lib/actions/teacher"
+import { PlusCircle, BookOpen, Trash2, Edit2 } from "lucide-react"
+import { createQuiz, updateQuiz, deleteQuiz } from "@/lib/actions/teacher"
 
 interface Topic {
   id: string
@@ -79,6 +79,7 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
         maxAttempts: formData.maxAttempts ? parseInt(formData.maxAttempts) : null,
         timeLimit: formData.timeLimit ? parseInt(formData.timeLimit) : null,
         shuffleQuestions: formData.shuffleQuestions,
+        requireAllTopics: formData.requireAllTopics,
       })
 
       // Add the new quiz to the list
@@ -113,6 +114,20 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleTogglePublish = async (quizId: string, currentStatus: boolean) => {
+    try {
+      await updateQuiz(quizId, { isPublished: !currentStatus })
+      setQuizzes(quizzes.map(q => q.id === quizId ? { ...q, isPublished: !currentStatus } : q))
+    } catch (error) {
+      console.error("Error updating quiz:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el cuestionario",
+        variant: "destructive",
+      })
     }
   }
 
@@ -322,13 +337,21 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
                 </div>
 
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => router.push(`/teacher/quizzes/${quiz.id}/questions`)}
+                  >
                     <Edit2 className="h-4 w-4" />
                     Editar Preguntas
                   </Button>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Eye className="h-4 w-4" />
-                    Vista Previa
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleTogglePublish(quiz.id, quiz.isPublished)}
+                  >
+                    {quiz.isPublished ? "Despublicar" : "Publicar"}
                   </Button>
                   <Button
                     variant="outline"
