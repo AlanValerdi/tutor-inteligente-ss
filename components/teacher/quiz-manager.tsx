@@ -9,6 +9,12 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { 
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from "@/components/ui/tabs"
+import { 
   Plus, 
   FileQuestion, 
   Edit2, 
@@ -19,9 +25,11 @@ import {
   Clock,
   Target,
   RotateCcw,
-  ArrowLeft
+  ArrowLeft,
+  FileUp
 } from "lucide-react"
 import { createQuiz, updateQuiz, deleteQuiz } from "@/lib/actions/teacher"
+import { DocxUploadForm } from "./docx-upload-form"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +63,7 @@ interface QuizManagerProps {
 export function QuizManager({ topic, quizzes: initialQuizzes }: QuizManagerProps) {
   const router = useRouter()
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [createMode, setCreateMode] = useState<"manual" | "docx">("manual")
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   
@@ -202,114 +211,141 @@ export function QuizManager({ topic, quizzes: initialQuizzes }: QuizManagerProps
             <CardHeader>
               <CardTitle>Crear Nuevo Cuestionario</CardTitle>
               <CardDescription>
-                Define los parámetros del cuestionario. Podrás agregar preguntas después.
+                Elige el método: crear manualmente o cargar desde DOCX
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {submitted && (
-                <div className="mb-6 flex items-center gap-3 p-4 rounded-lg border border-success/30 bg-success/5">
-                  <CheckCircle2 className="h-5 w-5 text-success" />
-                  <p className="text-sm font-medium text-success">
-                    ¡Cuestionario creado exitosamente!
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="quiz-title">
-                    Título <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="quiz-title"
-                    placeholder="Ej: Evaluación Final - Módulo 1"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    disabled={loading || submitted}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="quiz-description">Descripción</Label>
-                  <Textarea
-                    id="quiz-description"
-                    placeholder="Describe brevemente el objetivo del cuestionario..."
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    disabled={loading || submitted}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="passing-score" className="flex items-center gap-2">
-                      <Target className="h-4 w-4" />
-                      Nota Mínima (%)
-                    </Label>
-                    <Input
-                      id="passing-score"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={formData.passingScore}
-                      onChange={(e) => setFormData({ ...formData, passingScore: parseInt(e.target.value) || 70 })}
-                      disabled={loading || submitted}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="max-attempts" className="flex items-center gap-2">
-                      <RotateCcw className="h-4 w-4" />
-                      Intentos Máximos
-                    </Label>
-                    <Input
-                      id="max-attempts"
-                      type="number"
-                      min="1"
-                      placeholder="Ilimitado"
-                      value={formData.maxAttempts ?? ""}
-                      onChange={(e) => setFormData({ ...formData, maxAttempts: e.target.value ? parseInt(e.target.value) : null })}
-                      disabled={loading || submitted}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="time-limit" className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Tiempo (minutos)
-                    </Label>
-                    <Input
-                      id="time-limit"
-                      type="number"
-                      min="1"
-                      placeholder="Sin límite"
-                      value={formData.timeLimit ?? ""}
-                      onChange={(e) => setFormData({ ...formData, timeLimit: e.target.value ? parseInt(e.target.value) : null })}
-                      disabled={loading || submitted}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 pt-4">
-                  <Button
-                    onClick={handleCreateQuiz}
-                    disabled={loading || submitted || !formData.title}
-                    className="gap-2"
-                  >
+              <Tabs value={createMode} onValueChange={(v) => setCreateMode(v as "manual" | "docx")}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="manual" className="gap-2">
                     <Plus className="h-4 w-4" />
-                    {loading ? "Creando..." : "Crear Cuestionario"}
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowCreateForm(false)}
-                    disabled={loading}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
+                    Manual
+                  </TabsTrigger>
+                  <TabsTrigger value="docx" className="gap-2">
+                    <FileUp className="h-4 w-4" />
+                    Desde DOCX
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Manual Tab */}
+                <TabsContent value="manual" className="space-y-4 mt-4">
+                  {submitted && (
+                    <div className="mb-6 flex items-center gap-3 p-4 rounded-lg border border-success/30 bg-success/5">
+                      <CheckCircle2 className="h-5 w-5 text-success" />
+                      <p className="text-sm font-medium text-success">
+                        ¡Cuestionario creado exitosamente!
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="quiz-title">
+                        Título <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="quiz-title"
+                        placeholder="Ej: Evaluación Final - Módulo 1"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        disabled={loading || submitted}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="quiz-description">Descripción</Label>
+                      <Textarea
+                        id="quiz-description"
+                        placeholder="Describe brevemente el objetivo del cuestionario..."
+                        rows={3}
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        disabled={loading || submitted}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="passing-score" className="flex items-center gap-2">
+                          <Target className="h-4 w-4" />
+                          Nota Mínima (%)
+                        </Label>
+                        <Input
+                          id="passing-score"
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={formData.passingScore}
+                          onChange={(e) => setFormData({ ...formData, passingScore: parseInt(e.target.value) || 70 })}
+                          disabled={loading || submitted}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="max-attempts" className="flex items-center gap-2">
+                          <RotateCcw className="h-4 w-4" />
+                          Intentos Máximos
+                        </Label>
+                        <Input
+                          id="max-attempts"
+                          type="number"
+                          min="1"
+                          placeholder="Ilimitado"
+                          value={formData.maxAttempts ?? ""}
+                          onChange={(e) => setFormData({ ...formData, maxAttempts: e.target.value ? parseInt(e.target.value) : null })}
+                          disabled={loading || submitted}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="time-limit" className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Tiempo (minutos)
+                        </Label>
+                        <Input
+                          id="time-limit"
+                          type="number"
+                          min="1"
+                          placeholder="Sin límite"
+                          value={formData.timeLimit ?? ""}
+                          onChange={(e) => setFormData({ ...formData, timeLimit: e.target.value ? parseInt(e.target.value) : null })}
+                          disabled={loading || submitted}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-4">
+                      <Button
+                        onClick={handleCreateQuiz}
+                        disabled={loading || submitted || !formData.title}
+                        className="gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        {loading ? "Creando..." : "Crear Cuestionario"}
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowCreateForm(false)}
+                        disabled={loading}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* DOCX Tab */}
+                <TabsContent value="docx" className="mt-4">
+                  <DocxUploadForm 
+                    topicId={topic.id}
+                    onClose={() => {
+                      setShowCreateForm(false)
+                      router.refresh()
+                    }}
+                  />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         ) : (

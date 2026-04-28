@@ -185,6 +185,7 @@ model Quiz {
   timeLimit       Int?           // Time limit in minutes (null = no limit)
   shuffleQuestions Boolean       @default(false)
   isPublished     Boolean        @default(false)
+  isDiagnostic    Boolean        @default(false) // If true, it's an initial diagnostic quiz
   // For course-level quizzes, require completion of all topics?
   requireAllTopics Boolean       @default(false) // Only applicable if courseId is set
   createdAt       DateTime       @default(now())

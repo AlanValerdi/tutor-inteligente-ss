@@ -16,9 +16,10 @@ interface QuizAttempt {
   scrollReversals: number
   quiz: {
     title: string
-    topic: { id: string; courseId: string }
+    topic: { id: string; courseId: string } | null
+    course?: { id: string } | null
   }
-  user: { id: string; name: string; email: string }
+  user: { id: string; name: string | null; email: string }
   startedAt: Date
 }
 

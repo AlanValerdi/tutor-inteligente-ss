@@ -523,6 +523,7 @@ export async function createQuiz(data: {
   timeLimit?: number
   shuffleQuestions?: boolean
   requireAllTopics?: boolean
+  isDiagnostic?: boolean
 }) {
   const session = await auth()
   
@@ -569,10 +570,11 @@ export async function createQuiz(data: {
       title: data.title,
       description: data.description,
       passingScore: data.passingScore ?? 70,
-      maxAttempts: data.maxAttempts,
+      maxAttempts: data.isDiagnostic ? 1 : data.maxAttempts,
       timeLimit: data.timeLimit,
       shuffleQuestions: data.shuffleQuestions ?? false,
       requireAllTopics: data.requireAllTopics ?? false,
+      isDiagnostic: data.isDiagnostic ?? false,
       isPublished: false
     }
   })
@@ -839,4 +841,125 @@ export async function changeStudentLearningProfile(
   revalidatePath(`/student/courses`, 'layout')
 
   return updatedUser
+}
+
+export async function createQuizFromDocx(data: {
+  topicId?: string
+  courseId?: string
+  title: string
+  description?: string
+  passingScore?: number
+  maxAttempts?: number
+  timeLimit?: number
+  shuffleQuestions?: boolean
+  requireAllTopics?: boolean
+  isDiagnostic?: boolean
+  questions: Array<{
+    pregunta: string
+    tipo: "MC" | "VF" | "SA"
+    opciones: Record<string, string>
+    respuestaCorrecta: string
+    explicacion?: string
+    puntos?: number
+  }>
+}) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "TEACHER") {
+    throw new Error("No autorizado")
+  }
+
+  // Validar que tenemos topicId o courseId, pero no ambos
+  if (!data.topicId && !data.courseId) {
+    throw new Error("Un cuestionario debe estar ligado a un tema o a un curso")
+  }
+
+  if (data.topicId && data.courseId) {
+    throw new Error("Un cuestionario no puede estar ligado a ambos, tema y curso")
+  }
+
+  // Validar autorización según el tipo
+  if (data.topicId) {
+    const topic = await prisma.topic.findUnique({
+      where: { id: data.topicId },
+      include: { course: true }
+    })
+
+    if (!topic || topic.course.teacherId !== session.user.id) {
+      throw new Error("Tema no encontrado o no autorizado")
+    }
+  }
+
+  if (data.courseId) {
+    const course = await prisma.course.findUnique({
+      where: { id: data.courseId }
+    })
+
+    if (!course || course.teacherId !== session.user.id) {
+      throw new Error("Curso no encontrado o no autorizado")
+    }
+  }
+
+  // Crear Quiz
+  const quiz = await prisma.quiz.create({
+    data: {
+      topicId: data.topicId,
+      courseId: data.courseId,
+      title: data.title,
+      description: data.description,
+      passingScore: data.passingScore ?? 70,
+      maxAttempts: data.isDiagnostic ? 1 : data.maxAttempts,
+      timeLimit: data.timeLimit,
+      shuffleQuestions: data.shuffleQuestions ?? false,
+      requireAllTopics: data.requireAllTopics ?? false,
+      isDiagnostic: data.isDiagnostic ?? false,
+      isPublished: false
+    }
+  })
+
+  // Crear Questions en batch
+  let order = 1
+  for (const q of data.questions) {
+    // Mapear tipo de DOCX a tipo de BD
+    let questionType: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER"
+    let options: any
+
+    if (q.tipo === "MC") {
+      questionType = "MULTIPLE_CHOICE"
+      // Construir opciones con isCorrect
+      options = Object.entries(q.opciones)
+        .filter(([, text]) => text)
+        .map(([key, text]) => ({
+          text,
+          isCorrect: key.toUpperCase() === q.respuestaCorrecta
+        }))
+    } else if (q.tipo === "VF") {
+      questionType = "TRUE_FALSE"
+      options = {
+        correctAnswer: q.respuestaCorrecta === "Verdadero"
+      }
+    } else {
+      // SA - Respuesta Corta
+      questionType = "SHORT_ANSWER"
+      options = {
+        acceptedAnswers: q.respuestaCorrecta ? [q.respuestaCorrecta] : []
+      }
+    }
+
+    await prisma.question.create({
+      data: {
+        quizId: quiz.id,
+        type: questionType,
+        questionText: q.pregunta,
+        options,
+        points: q.puntos ?? 1,
+        explanation: q.explicacion,
+        order
+      }
+    })
+
+    order++
+  }
+
+  return quiz
 }

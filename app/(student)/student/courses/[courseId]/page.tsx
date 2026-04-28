@@ -12,10 +12,14 @@ interface CoursePageProps {
   params: Promise<{
     courseId: string
   }>
+  searchParams: Promise<{
+    diagnostic?: string
+  }>
 }
 
-export default async function StudentCoursePage({ params }: CoursePageProps) {
+export default async function StudentCoursePage({ params, searchParams }: CoursePageProps) {
   const { courseId } = await params
+  const { diagnostic } = await searchParams
   const session = await auth()
 
   if (!session?.user) {
@@ -38,6 +42,32 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
   
   if (!enrollment) {
     redirect("/student/courses") // User not enrolled
+  }
+
+  // Check for diagnostic quizzes
+  const diagnosticQuizzes = await prisma.quiz.findMany({
+    where: {
+      courseId: courseId,
+      isDiagnostic: true,
+      isPublished: true,
+    },
+    orderBy: { createdAt: "asc" }
+  })
+
+  if (diagnosticQuizzes.length > 0) {
+    const attempts = await prisma.quizAttempt.findMany({
+      where: {
+        userId: session.user.id,
+        quizId: { in: diagnosticQuizzes.map(q => q.id) }
+      }
+    })
+
+    const completedQuizIds = new Set(attempts.map(a => a.quizId))
+    const pendingDiagnostic = diagnosticQuizzes.find(q => !completedQuizIds.has(q.id))
+
+    if (pendingDiagnostic) {
+      redirect(`/student/courses/${courseId}/quizzes/${pendingDiagnostic.id}/take`)
+    }
   }
 
   // Get the student's current profile from database (fresh data, not from session JWT)
@@ -108,6 +138,7 @@ export default async function StudentCoursePage({ params }: CoursePageProps) {
           initialProgress={enrollment.progress}
           completedTopics={enrollment.completedTopics}
           enrollment={enrollment as any} 
+          diagnosticCompleted={diagnostic === "completed"}
         />
       </div>
     </div>

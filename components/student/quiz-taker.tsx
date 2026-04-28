@@ -20,6 +20,7 @@ interface QuizData {
   timeLimit: number | null
   passingScore: number
   shuffleQuestions: boolean
+  isDiagnostic?: boolean
 }
 
 interface QuestionData {
@@ -37,7 +38,7 @@ interface QuizTakerProps {
   quiz: QuizData
   questions: QuestionData[]
   courseId: string
-  topicId: string
+  topicId?: string
   userId: string
 }
 
@@ -244,7 +245,13 @@ export function QuizTaker({ quiz, questions, courseId, topicId, userId }: QuizTa
       })
 
       if (result.success && result.attemptId) {
-        router.push(`/student/courses/${courseId}/topics/${topicId}/quizzes/${quiz.id}/results/${result.attemptId}`)
+        if (quiz.isDiagnostic) {
+          router.push(`/student/courses/${courseId}?diagnostic=completed`)
+        } else if (topicId) {
+          router.push(`/student/courses/${courseId}/topics/${topicId}/quizzes/${quiz.id}/results/${result.attemptId}`)
+        } else {
+          router.push(`/student/courses/${courseId}/quizzes/${quiz.id}/results/${result.attemptId}`)
+        }
       } else {
         alert(result.error || "Error al enviar el cuestionario")
         setIsSubmitting(false)
