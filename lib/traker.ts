@@ -1,17 +1,13 @@
-// lib/tracker.ts
-export const pushToTracker = async (data: any) => {
+// lib/traker.ts — legacy helper, use useInteractionTracker hook instead
+export const pushToTracker = async (data: unknown) => {
   try {
-    const response = await fetch(process.env.NEXT_PUBLIC_TRACKER_API_URL!, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...data,
-        // El tracker pide obligatoriamente un token temporal
-        tempSessionToken: sessionStorage.getItem('tracker_token') || "guest-session"
-      }),
-    });
-    return await response.json();
+    const response = await fetch("/api/tracker/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    return await response.json()
   } catch (error) {
-    console.error("Error al contactar al microservicio tracker:", error);
+    console.error("[Tracker] pushToTracker failed:", error)
   }
-};
+}

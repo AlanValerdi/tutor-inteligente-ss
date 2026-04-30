@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { useInteractionTracker } from "@/hooks/use-interaction-tracker"
 import {
   ArrowLeft,
   ArrowRight,
@@ -70,6 +71,8 @@ export function TopicDetailAdapter({
   const { toast } = useToast()
   const [contentRead, setContentRead] = useState(isContentRead)
   const [isMarking, setIsMarking] = useState(false)
+
+  useInteractionTracker({ topicId: topic.id, courseId })
 
   // Check if all quizzes are passed
   const allQuizzesPassed = quizzes.length > 0 

@@ -74,6 +74,19 @@ export function QuizTaker({ quiz, questions, courseId, topicId, userId }: QuizTa
   const clickTimestampsRef = useRef<number[]>([])
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Per-question time and attempt tracking
+  const questionStartTimeRef = useRef(Date.now())
+  const questionSecondsRef = useRef<Map<string, number>>(new Map())
+  const questionAttemptsRef = useRef<Map<string, number>>(new Map())
+  const questionFirstVisitRef = useRef<Map<string, number>>(new Map())
+  const questionFirstAnswerSecondsRef = useRef<Map<string, number>>(new Map())
+
+  // Additional anxiety signals
+  const copyAttemptsRef = useRef(0)
+  const rightClickCountRef = useRef(0)
+  const windowBlursRef = useRef(0)
+  const backNavigationsRef = useRef(0)
+
   // Shuffle questions if required
   const [displayQuestions] = useState(() => {
     if (quiz.shuffleQuestions) {
@@ -84,6 +97,28 @@ export function QuizTaker({ quiz, questions, courseId, topicId, userId }: QuizTa
 
   const currentQuestion = displayQuestions[currentQuestionIndex]
   const progress = ((currentQuestionIndex + 1) / displayQuestions.length) * 100
+
+  // Record first visit for the initial question
+  useEffect(() => {
+    const firstQId = displayQuestions[0]?.id
+    if (firstQId) questionFirstVisitRef.current.set(firstQId, Date.now())
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Copy / right-click / window blur tracking
+  useEffect(() => {
+    const onCopy = () => { copyAttemptsRef.current++ }
+    const onContextMenu = () => { rightClickCountRef.current++ }
+    const onBlur = () => { windowBlursRef.current++ }
+    document.addEventListener("copy", onCopy)
+    document.addEventListener("contextmenu", onContextMenu)
+    window.addEventListener("blur", onBlur)
+    return () => {
+      document.removeEventListener("copy", onCopy)
+      document.removeEventListener("contextmenu", onContextMenu)
+      window.removeEventListener("blur", onBlur)
+    }
+  }, [])
 
   // Timer countdown
   useEffect(() => {
@@ -194,12 +229,45 @@ export function QuizTaker({ quiz, questions, courseId, topicId, userId }: QuizTa
         a.questionId === questionId ? { ...a, selectedAnswer: answer } : a
       )
     )
+    // Count each answer selection as an attempt for that question
+    questionAttemptsRef.current.set(
+      questionId,
+      (questionAttemptsRef.current.get(questionId) ?? 0) + 1
+    )
+    // Record time to first answer for this question
+    if (!questionFirstAnswerSecondsRef.current.has(questionId)) {
+      const firstVisit = questionFirstVisitRef.current.get(questionId)
+      if (firstVisit) {
+        questionFirstAnswerSecondsRef.current.set(
+          questionId,
+          (Date.now() - firstVisit) / 1000
+        )
+      }
+    }
+  }
+
+  // Record time spent on the current question before navigating away
+  const recordCurrentQuestionTime = () => {
+    const qId = displayQuestions[currentQuestionIndex]?.id
+    if (!qId) return
+    const elapsed = Math.floor((Date.now() - questionStartTimeRef.current) / 1000)
+    questionSecondsRef.current.set(
+      qId,
+      (questionSecondsRef.current.get(qId) ?? 0) + elapsed
+    )
+    questionStartTimeRef.current = Date.now()
   }
 
   // Navigation
   const goToQuestion = (index: number) => {
     if (index >= 0 && index < displayQuestions.length) {
+      recordCurrentQuestionTime()
+      if (index < currentQuestionIndex) backNavigationsRef.current++
       setCurrentQuestionIndex(index)
+      const nextQId = displayQuestions[index]?.id
+      if (nextQId && !questionFirstVisitRef.current.has(nextQId)) {
+        questionFirstVisitRef.current.set(nextQId, Date.now())
+      }
     }
   }
 
@@ -226,6 +294,9 @@ export function QuizTaker({ quiz, questions, courseId, topicId, userId }: QuizTa
     try {
       const timeSpent = Math.floor((Date.now() - startTime) / 1000)
 
+      // Record time on the last visible question before submitting
+      recordCurrentQuestionTime()
+
       const result = await submitQuizAttempt({
         quizId: quiz.id,
         userId,
@@ -234,16 +305,43 @@ export function QuizTaker({ quiz, questions, courseId, topicId, userId }: QuizTa
           selectedAnswer: a.selectedAnswer || ""
         })),
         timeSpent,
-        anxietyMetrics: {
-          tabSwitches,
-          consecutiveClicks,
-          missedClicks,
-          idleTimeSeconds: idleTime,
-          scrollReversals
-        }
       })
 
       if (result.success && result.attemptId) {
+        // Send quiz interaction to tracker (best-effort, non-blocking)
+        const timePerQuestion = Array.from(questionSecondsRef.current.entries()).map(
+          ([questionId, seconds]) => ({ questionId, seconds })
+        )
+        const attemptsPerQuestion = Array.from(questionAttemptsRef.current.entries()).map(
+          ([questionId, attempts]) => ({ questionId, attempts })
+        )
+        const timeToFirstAnswer = Array.from(questionFirstAnswerSecondsRef.current.entries()).map(
+          ([questionId, seconds]) => ({ questionId, seconds })
+        )
+        fetch("/api/tracker/sessions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            topicId,
+            courseId,
+            totalTime: timeSpent,
+            idleTime,
+            tabSwitches,
+            missedClicks,
+            scrollReversals,
+            consecutiveClicks,
+            copyAttempts: copyAttemptsRef.current,
+            rightClickCount: rightClickCountRef.current,
+            windowBlurs: windowBlursRef.current,
+            timePerQuestion: timePerQuestion.length > 0 ? timePerQuestion : undefined,
+            attemptsPerQuestion: attemptsPerQuestion.length > 0 ? attemptsPerQuestion : undefined,
+            backNavigations: backNavigationsRef.current,
+            timeToFirstAnswer: timeToFirstAnswer.length > 0 ? timeToFirstAnswer : undefined,
+            resources: [],
+          }),
+          keepalive: true,
+        }).catch(e => console.error("[Tracker] quiz session failed", e))
+
         router.push(`/student/courses/${courseId}/topics/${topicId}/quizzes/${quiz.id}/results/${result.attemptId}`)
       } else {
         alert(result.error || "Error al enviar el cuestionario")

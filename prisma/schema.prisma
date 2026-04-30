@@ -162,7 +162,6 @@ enum ResourceType {
   Video
   Audio
   Diapositiva
-  Quiz
   JuegoInteractivo
   ImagenInteractiva
   Simulacion
@@ -224,15 +223,10 @@ model QuizAttempt {
   answers         Json           // Array of {questionId, selectedAnswer, isCorrect, pointsEarned}
   passed          Boolean        @default(false)
   timeSpent       Int?           // Time spent in seconds
+  correctAnswers  Int?           // Total correct answers
+  incorrectAnswers Int?          // Total incorrect answers
   startedAt       DateTime       @default(now())
   completedAt     DateTime?
-  
-  // Anxiety tracking during quiz
-  tabSwitches     Int            @default(0)
-  consecutiveClicks Int          @default(0)
-  missedClicks    Int            @default(0)
-  idleTimeSeconds Int            @default(0)
-  scrollReversals Int            @default(0)
 }
 
 // ── Tracker ────────────────────────────────────────────────────────────────
@@ -255,7 +249,16 @@ model InteractionSession {
   missedClicks      Int                   @default(0)   // clics en zonas no interactivas
   scrollReversals   Int                   @default(0)   // veces que scrolleó hacia arriba
   consecutiveClicks Int                   @default(0)   // clics rápidos consecutivos (<500ms)
+  copyAttempts      Int                   @default(0)   // intentos de copiar texto de la página
+  rightClickCount   Int                   @default(0)   // clics derechos (menú de contexto)
+  windowBlurs       Int                   @default(0)   // pérdida de foco de ventana (alt-tab, cambio de app)
   anxietyLevel      AnxietyLevel?
+
+  // Métricas de engagement del quiz (null en sesiones de topic)
+  timePerQuestion   Json?                               // [{questionId, seconds}]
+  attemptsPerQuestion Json?                             // [{questionId, attempts}]
+  backNavigations   Int?                                // veces que regresó a pregunta anterior
+  timeToFirstAnswer Json?                               // [{questionId, seconds}]
 
   resources         ResourceInteraction[]
   createdAt         DateTime              @default(now())
@@ -287,14 +290,6 @@ model ResourceInteraction {
   percentageViewed     Float?
   timesReviewed        Int?
   zoomUsed             Boolean?
-
-  // ── Quiz ───────────────────────────────────────────────────────
-  // [{questionId: string, seconds: number}]
-  timePerQuestion      Json?
-  correctAnswers       Int?
-  incorrectAnswers     Int?
-  // [{questionId: string, attempts: number}]
-  attemptsPerQuestion  Json?
 
   // ── Juego interactivo ──────────────────────────────────────────
   gameCompleted        Boolean?

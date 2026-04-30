@@ -9,20 +9,11 @@ interface SubmitQuizAnswer {
   selectedAnswer: string
 }
 
-interface AnxietyMetrics {
-  tabSwitches: number
-  consecutiveClicks: number
-  missedClicks: number
-  idleTimeSeconds: number
-  scrollReversals: number
-}
-
 interface SubmitQuizAttemptParams {
   quizId: string
   userId: string
   answers: SubmitQuizAnswer[]
   timeSpent: number
-  anxietyMetrics: AnxietyMetrics
 }
 
 /**
@@ -59,7 +50,7 @@ async function updateEnrollmentProgress(userId: string, courseId: string) {
 
 export async function submitQuizAttempt(params: SubmitQuizAttemptParams) {
   try {
-    const { quizId, userId, answers, timeSpent, anxietyMetrics } = params
+    const { quizId, userId, answers, timeSpent } = params
 
     // Get quiz with questions
     const quiz = await prisma.quiz.findUnique({
@@ -108,6 +99,9 @@ export async function submitQuizAttempt(params: SubmitQuizAttemptParams) {
     const score = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0
     const passed = score >= quiz.passingScore
 
+    const correctAnswers   = gradedAnswers.filter(a => a.isCorrect).length
+    const incorrectAnswers = gradedAnswers.filter(a => !a.isCorrect).length
+
     // Create quiz attempt
     const attempt = await prisma.quizAttempt.create({
       data: {
@@ -119,50 +113,22 @@ export async function submitQuizAttempt(params: SubmitQuizAttemptParams) {
         answers: gradedAnswers,
         passed,
         timeSpent,
+        correctAnswers,
+        incorrectAnswers,
         completedAt: new Date(),
-        tabSwitches: anxietyMetrics.tabSwitches,
-        consecutiveClicks: anxietyMetrics.consecutiveClicks,
-        missedClicks: anxietyMetrics.missedClicks,
-        idleTimeSeconds: anxietyMetrics.idleTimeSeconds,
-        scrollReversals: anxietyMetrics.scrollReversals
       }
     })
 
-    // Update enrollment anxiety metrics and PROGRESS
+    // Actualizar progreso del curso
     if (courseId) {
       const enrollment = await prisma.enrollment.findUnique({
-        where: {
-          userId_courseId: { userId, courseId }
-        }
+        where: { userId_courseId: { userId, courseId } }
       })
-
       if (enrollment) {
-        const updateAnxietyArray = (current: any, newValue: number) => {
-          const arr = Array.isArray(current) ? current : []
-          const updated = [...arr, newValue]
-          return updated.slice(-10)
-        }
-
         await prisma.enrollment.update({
           where: { id: enrollment.id },
-          data: {
-            tabSwitches: updateAnxietyArray(enrollment.tabSwitches, anxietyMetrics.tabSwitches),
-            consecutiveClicks: updateAnxietyArray(enrollment.consecutiveClicks, anxietyMetrics.consecutiveClicks),
-            missedClicks: updateAnxietyArray(enrollment.missedClicks, anxietyMetrics.missedClicks),
-            idleTime: updateAnxietyArray(enrollment.idleTime, anxietyMetrics.idleTimeSeconds),
-            scrollReversals: updateAnxietyArray(enrollment.scrollReversals, anxietyMetrics.scrollReversals),
-            timePerQuestion: updateAnxietyArray(
-              enrollment.timePerQuestion,
-              quiz.questions.length > 0 ? Math.round(timeSpent / quiz.questions.length) : 0
-            ),
-            lastAccessedAt: new Date()
-          }
+          data: { lastAccessedAt: new Date() }
         })
-
-        // 1. Recalcular nivel de ansiedad
-        await updateAnxietyLevel(enrollment.id)
-        
-        // 2. RECALCULAR PROGRESO DEL CURSO (NUEVO)
         await updateEnrollmentProgress(userId, courseId)
       }
     }
@@ -171,7 +137,9 @@ export async function submitQuizAttempt(params: SubmitQuizAttemptParams) {
       success: true,
       attemptId: attempt.id,
       score,
-      passed
+      passed,
+      correctAnswers,
+      incorrectAnswers,
     }
   } catch (error) {
     console.error("Error submitting quiz attempt:", error)
@@ -179,58 +147,6 @@ export async function submitQuizAttempt(params: SubmitQuizAttemptParams) {
   }
 }
 
-// ... (El resto de funciones auxiliares updateAnxietyLevel, etc., se mantienen igual)
-
-
-// Helper function to update anxiety level based on metrics
-async function updateAnxietyLevel(enrollmentId: string) {
-  const enrollment = await prisma.enrollment.findUnique({
-    where: { id: enrollmentId }
-  })
-
-  if (!enrollment) return
-
-  // Calculate average metrics from last 10 sessions
-  const getAverage = (data: any): number => {
-    if (!Array.isArray(data) || data.length === 0) return 0
-    return data.reduce((sum: number, val: number) => sum + val, 0) / data.length
-  }
-
-  const avgTabSwitches = getAverage(enrollment.tabSwitches)
-  const avgConsecutiveClicks = getAverage(enrollment.consecutiveClicks)
-  const avgMissedClicks = getAverage(enrollment.missedClicks)
-  const avgScrollReversals = getAverage(enrollment.scrollReversals)
-
-  // Simple scoring system (you can adjust thresholds)
-  let anxietyScore = 0
-
-  if (avgTabSwitches > 5) anxietyScore += 2
-  else if (avgTabSwitches > 2) anxietyScore += 1
-
-  if (avgConsecutiveClicks > 3) anxietyScore += 2
-  else if (avgConsecutiveClicks > 1) anxietyScore += 1
-
-  if (avgMissedClicks > 5) anxietyScore += 2
-  else if (avgMissedClicks > 2) anxietyScore += 1
-
-  if (avgScrollReversals > 10) anxietyScore += 2
-  else if (avgScrollReversals > 5) anxietyScore += 1
-
-  // Determine anxiety level
-  let anxietyLevel: "Bajo" | "Medio" | "Alto"
-  if (anxietyScore >= 6) {
-    anxietyLevel = "Alto"
-  } else if (anxietyScore >= 3) {
-    anxietyLevel = "Medio"
-  } else {
-    anxietyLevel = "Bajo"
-  }
-
-  await prisma.enrollment.update({
-    where: { id: enrollmentId },
-    data: { anxietyLevel }
-  })
-}
 
 export async function getQuestionForPractice(questionId: string) {
   const { auth } = await import("@/lib/auth")

@@ -46,6 +46,13 @@ export async function POST(
     missedClicks,
     scrollReversals,
     consecutiveClicks,
+    copyAttempts,
+    rightClickCount,
+    windowBlurs,
+    timePerQuestion,
+    attemptsPerQuestion,
+    backNavigations,
+    timeToFirstAnswer,
     resources,
   } = parsed
 
@@ -68,10 +75,17 @@ export async function POST(
       missedClicks,
       scrollReversals,
       consecutiveClicks,
+      copyAttempts,
+      rightClickCount,
+      windowBlurs,
+      timePerQuestion: timePerQuestion ?? undefined,
+      attemptsPerQuestion: attemptsPerQuestion ?? undefined,
+      backNavigations,
+      timeToFirstAnswer: timeToFirstAnswer ?? undefined,
     },
   })
 
-  // Crear recursos asociados
+  // Crear recursos asociados (solo contenido de aprendizaje, no quizzes)
   if (resources.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await prisma.resourceInteraction.createMany({
@@ -80,6 +94,11 @@ export async function POST(
       ) as any,
     })
   }
+
+  // Actualizar nivel de ansiedad del enrollment a partir de las sesiones registradas
+  await updateEnrollmentAnxiety(userId, courseId).catch(e =>
+    console.error('[Tracker] updateEnrollmentAnxiety failed', e)
+  )
 
   return NextResponse.json(
     {
@@ -91,6 +110,67 @@ export async function POST(
   )
 }
 
+// ── Anxiety update ────────────────────────────────────────────────────────────
+// Lee las últimas 10 InteractionSessions del estudiante en el curso y recalcula
+// el nivel de ansiedad y los arrays de métricas en el Enrollment.
+async function updateEnrollmentAnxiety(userId: string, courseId: string) {
+  const sessions = await prisma.interactionSession.findMany({
+    where: { userId, courseId },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+    select: {
+      tabSwitches: true,
+      consecutiveClicks: true,
+      missedClicks: true,
+      idleTime: true,
+      scrollReversals: true,
+    },
+  })
+
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId } },
+  })
+
+  if (!enrollment || sessions.length === 0) return
+
+  const avg = (arr: number[]) =>
+    arr.reduce((a, b) => a + b, 0) / arr.length
+
+  const tabSwitchesArr    = sessions.map(s => s.tabSwitches)
+  const consecutiveArr    = sessions.map(s => s.consecutiveClicks)
+  const missedClicksArr   = sessions.map(s => s.missedClicks)
+  const idleTimeArr       = sessions.map(s => Math.round(s.idleTime))
+  const scrollReversalsArr = sessions.map(s => s.scrollReversals)
+
+  let score = 0
+  if (avg(tabSwitchesArr) > 5)    score += 2
+  else if (avg(tabSwitchesArr) > 2) score += 1
+
+  if (avg(consecutiveArr) > 3)    score += 2
+  else if (avg(consecutiveArr) > 1) score += 1
+
+  if (avg(missedClicksArr) > 5)   score += 2
+  else if (avg(missedClicksArr) > 2) score += 1
+
+  if (avg(scrollReversalsArr) > 10) score += 2
+  else if (avg(scrollReversalsArr) > 5) score += 1
+
+  const anxietyLevel = score >= 6 ? 'Alto' : score >= 3 ? 'Medio' : 'Bajo'
+
+  await prisma.enrollment.update({
+    where: { id: enrollment.id },
+    data: {
+      anxietyLevel,
+      tabSwitches:      tabSwitchesArr,
+      consecutiveClicks: consecutiveArr,
+      missedClicks:     missedClicksArr,
+      idleTime:         idleTimeArr,
+      scrollReversals:  scrollReversalsArr,
+    },
+  })
+}
+
+// ── Resource builder ──────────────────────────────────────────────────────────
 function buildResourceData(sessionId: string, r: ResourceInteractionInput) {
   return {
     sessionId,
@@ -111,12 +191,6 @@ function buildResourceData(sessionId: string, r: ResourceInteractionInput) {
     percentageViewed: r.percentageViewed,
     timesReviewed: r.timesReviewed,
     zoomUsed: r.zoomUsed,
-
-    // Quiz
-    timePerQuestion: r.timePerQuestion ?? undefined,
-    correctAnswers: r.correctAnswers,
-    incorrectAnswers: r.incorrectAnswers,
-    attemptsPerQuestion: r.attemptsPerQuestion ?? undefined,
 
     // Juego interactivo
     gameCompleted: r.gameCompleted,
