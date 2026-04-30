@@ -44,9 +44,14 @@ export async function PATCH(
     return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 })
   }
 
+  const newRole = parsed.data.role
   const updated = await prisma.user.update({
     where: { id },
-    data: { role: parsed.data.role },
+    data: {
+      role: newRole,
+      // Limpiar perfil de estudio al ascender a TEACHER o ADMIN
+      ...(newRole !== 'STUDENT' && { studyProfile: null }),
+    },
     select: { id: true, name: true, email: true, role: true },
   })
 
