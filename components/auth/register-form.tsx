@@ -188,6 +188,18 @@ export function RegisterForm() {
             )}
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              {...register("confirmPassword")}
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
+            )}
+          </div>
+
           <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
             {isLoading ? "Creando cuenta..." : "Crear cuenta"}
           </Button>
