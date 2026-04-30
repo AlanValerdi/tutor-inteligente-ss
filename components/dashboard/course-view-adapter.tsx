@@ -66,6 +66,7 @@ interface CourseViewProps {
   initialProgress?: number
   completedTopics?: number
   enrollment?: any;
+  diagnosticCompleted?: boolean;
 }
 
 export function CourseViewAdapter({ 
@@ -74,7 +75,8 @@ export function CourseViewAdapter({
   studentProfile = "Visual",
   initialProgress = 0,
   completedTopics = 0,
-  enrollment    // Valor que viene de la DB
+  enrollment,    // Valor que viene de la DB
+  diagnosticCompleted
 }: CourseViewProps) {
   const router = useRouter()
   
@@ -93,6 +95,15 @@ const totalAvailableTopics = availableTopics.length;
 
   return (
     <div className="px-8 py-8">
+      {diagnosticCompleted && (
+        <div className="mb-6 rounded-lg bg-success/10 p-4 text-success flex items-start gap-3">
+          <CheckCircle2 className="h-5 w-5 mt-0.5" />
+          <div>
+            <h3 className="font-semibold">¡Diagnóstico Inicial Completado!</h3>
+            <p className="text-sm">Tus resultados han sido registrados. Ahora puedes comenzar con el temario del curso.</p>
+          </div>
+        </div>
+      )}
       <div className="mb-8">
           <h1 className="mb-2 font-display text-2xl font-bold text-foreground">{course.title}</h1>
           <p className="mb-4 text-muted-foreground leading-relaxed">

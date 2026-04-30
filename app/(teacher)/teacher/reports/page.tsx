@@ -31,16 +31,27 @@ export default async function TeacherReportsPage() {
   // Get all quiz attempts for students in teacher's courses
   const quizAttempts = await prisma.quizAttempt.findMany({
     where: {
-      quiz: {
-        topic: {
-          course: {
-            teacherId: session.user.id
+      OR: [
+        {
+          quiz: {
+            topic: {
+              course: {
+                teacherId: session.user.id
+              }
+            }
+          }
+        },
+        {
+          quiz: {
+            course: {
+              teacherId: session.user.id
+            }
           }
         }
-      }
+      ]
     },
     include: {
-      quiz: { include: { topic: true } },
+      quiz: { include: { topic: true, course: true } },
       user: { select: { id: true, name: true, email: true } }
     },
     orderBy: { startedAt: "desc" }

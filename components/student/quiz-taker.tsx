@@ -20,6 +20,7 @@ interface QuizData {
   timeLimit: number | null
   passingScore: number
   shuffleQuestions: boolean
+  isDiagnostic?: boolean
 }
 
 interface QuestionData {
@@ -37,7 +38,7 @@ interface QuizTakerProps {
   quiz: QuizData
   questions: QuestionData[]
   courseId: string
-  topicId: string
+  topicId?: string
   userId: string
 }
 
@@ -308,41 +309,49 @@ export function QuizTaker({ quiz, questions, courseId, topicId, userId }: QuizTa
       })
 
       if (result.success && result.attemptId) {
-        // Send quiz interaction to tracker (best-effort, non-blocking)
-        const timePerQuestion = Array.from(questionSecondsRef.current.entries()).map(
-          ([questionId, seconds]) => ({ questionId, seconds })
-        )
-        const attemptsPerQuestion = Array.from(questionAttemptsRef.current.entries()).map(
-          ([questionId, attempts]) => ({ questionId, attempts })
-        )
-        const timeToFirstAnswer = Array.from(questionFirstAnswerSecondsRef.current.entries()).map(
-          ([questionId, seconds]) => ({ questionId, seconds })
-        )
-        fetch("/api/tracker/sessions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            topicId,
-            courseId,
-            totalTime: timeSpent,
-            idleTime,
-            tabSwitches,
-            missedClicks,
-            scrollReversals,
-            consecutiveClicks,
-            copyAttempts: copyAttemptsRef.current,
-            rightClickCount: rightClickCountRef.current,
-            windowBlurs: windowBlursRef.current,
-            timePerQuestion: timePerQuestion.length > 0 ? timePerQuestion : undefined,
-            attemptsPerQuestion: attemptsPerQuestion.length > 0 ? attemptsPerQuestion : undefined,
-            backNavigations: backNavigationsRef.current,
-            timeToFirstAnswer: timeToFirstAnswer.length > 0 ? timeToFirstAnswer : undefined,
-            resources: [],
-          }),
-          keepalive: true,
-        }).catch(e => console.error("[Tracker] quiz session failed", e))
+        // Send quiz interaction to tracker — solo si hay topicId (quizzes de topic)
+        if (topicId) {
+          const timePerQuestion = Array.from(questionSecondsRef.current.entries()).map(
+            ([questionId, seconds]) => ({ questionId, seconds })
+          )
+          const attemptsPerQuestion = Array.from(questionAttemptsRef.current.entries()).map(
+            ([questionId, attempts]) => ({ questionId, attempts })
+          )
+          const timeToFirstAnswer = Array.from(questionFirstAnswerSecondsRef.current.entries()).map(
+            ([questionId, seconds]) => ({ questionId, seconds })
+          )
+          fetch("/api/tracker/sessions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              topicId,
+              courseId,
+              totalTime: timeSpent,
+              idleTime,
+              tabSwitches,
+              missedClicks,
+              scrollReversals,
+              consecutiveClicks,
+              copyAttempts: copyAttemptsRef.current,
+              rightClickCount: rightClickCountRef.current,
+              windowBlurs: windowBlursRef.current,
+              timePerQuestion: timePerQuestion.length > 0 ? timePerQuestion : undefined,
+              attemptsPerQuestion: attemptsPerQuestion.length > 0 ? attemptsPerQuestion : undefined,
+              backNavigations: backNavigationsRef.current,
+              timeToFirstAnswer: timeToFirstAnswer.length > 0 ? timeToFirstAnswer : undefined,
+              resources: [],
+            }),
+            keepalive: true,
+          }).catch(e => console.error("[Tracker] quiz session failed", e))
+        }
 
-        router.push(`/student/courses/${courseId}/topics/${topicId}/quizzes/${quiz.id}/results/${result.attemptId}`)
+        if (quiz.isDiagnostic) {
+          router.push(`/student/courses/${courseId}?diagnostic=completed`)
+        } else if (topicId) {
+          router.push(`/student/courses/${courseId}/topics/${topicId}/quizzes/${quiz.id}/results/${result.attemptId}`)
+        } else {
+          router.push(`/student/courses/${courseId}/quizzes/${quiz.id}/results/${result.attemptId}`)
+        }
       } else {
         alert(result.error || "Error al enviar el cuestionario")
         setIsSubmitting(false)

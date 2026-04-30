@@ -11,8 +11,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { PlusCircle, BookOpen, Trash2, Edit2 } from "lucide-react"
+import { 
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from "@/components/ui/tabs"
+import { PlusCircle, BookOpen, Trash2, Edit2, FileUp } from "lucide-react"
 import { createQuiz, updateQuiz, deleteQuiz } from "@/lib/actions/teacher"
+import { DocxUploadForm } from "./docx-upload-form"
 
 interface Topic {
   id: string
@@ -32,6 +39,7 @@ interface Quiz {
   topicId: string | null
   courseId: string | null
   requireAllTopics?: boolean
+  isDiagnostic?: boolean
 }
 
 interface CourseQuizManagerProps {
@@ -46,6 +54,7 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
   const [quizzes, setQuizzes] = useState(initialQuizzes)
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [createMode, setCreateMode] = useState<"manual" | "docx">("manual")
 
   // Form state
   const [formData, setFormData] = useState({
@@ -56,6 +65,7 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
     timeLimit: "",
     shuffleQuestions: false,
     requireAllTopics: false,
+    isDiagnostic: false,
   })
 
   const handleCreateQuiz = async () => {
@@ -76,10 +86,11 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
         courseId: course.id, // Course-level quiz
         topicId: undefined,  // Not linked to a specific topic
         passingScore: formData.passingScore,
-        maxAttempts: formData.maxAttempts ? parseInt(formData.maxAttempts) : null,
-        timeLimit: formData.timeLimit ? parseInt(formData.timeLimit) : null,
+        maxAttempts: formData.maxAttempts ? parseInt(formData.maxAttempts) : undefined,
+        timeLimit: formData.timeLimit ? parseInt(formData.timeLimit) : undefined,
         shuffleQuestions: formData.shuffleQuestions,
         requireAllTopics: formData.requireAllTopics,
+        isDiagnostic: formData.isDiagnostic,
       })
 
       // Add the new quiz to the list
@@ -94,6 +105,7 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
         timeLimit: "",
         shuffleQuestions: false,
         requireAllTopics: false,
+        isDiagnostic: false,
       })
 
       setIsOpen(false)
@@ -169,118 +181,173 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
           <DialogHeader>
             <DialogTitle>Crear Cuestionario del Curso</DialogTitle>
             <DialogDescription>
-              Este cuestionario será disponible para todos los estudiantes del curso {course.title}, 
-              sin necesidad de completar temas específicos (a menos que lo requieras).
+              Elige el método: crear manualmente o cargar desde DOCX
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            {/* Title */}
-            <div>
-              <Label htmlFor="title">Título del Cuestionario *</Label>
-              <Input
-                id="title"
-                placeholder="Ej: Evaluación Final del Curso"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              />
-            </div>
+          <Tabs value={createMode} onValueChange={(v) => setCreateMode(v as "manual" | "docx")}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="manual" className="gap-2">
+                <PlusCircle className="h-4 w-4" />
+                Manual
+              </TabsTrigger>
+              <TabsTrigger value="docx" className="gap-2">
+                <FileUp className="h-4 w-4" />
+                Desde DOCX
+              </TabsTrigger>
+            </TabsList>
 
-            {/* Description */}
-            <div>
-              <Label htmlFor="description">Descripción</Label>
-              <Textarea
-                id="description"
-                placeholder="Descripción opcional"
-                rows={3}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
+            {/* Manual Tab */}
+            <TabsContent value="manual" className="space-y-4 mt-4">
+              <div className="space-y-4">
+                {/* Title */}
+                <div>
+                  <Label htmlFor="title">Título del Cuestionario *</Label>
+                  <Input
+                    id="title"
+                    placeholder="Ej: Evaluación Final del Curso"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    disabled={isLoading}
+                  />
+                </div>
 
-            {/* Settings Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="passingScore">Puntuación Mínima para Aprobar (%)</Label>
-                <Input
-                  id="passingScore"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.passingScore}
-                  onChange={(e) => setFormData({ ...formData, passingScore: parseInt(e.target.value) })}
-                />
-              </div>
+                {/* Description */}
+                <div>
+                  <Label htmlFor="description">Descripción</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Descripción opcional"
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    disabled={isLoading}
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="maxAttempts">Máximo de Intentos</Label>
-                <Input
-                  id="maxAttempts"
-                  type="number"
-                  min="1"
-                  placeholder="Dejar en blanco = ilimitado"
-                  value={formData.maxAttempts}
-                  onChange={(e) => setFormData({ ...formData, maxAttempts: e.target.value })}
-                />
-              </div>
+                {/* Settings Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="passingScore">Puntuación Mínima para Aprobar (%)</Label>
+                    <Input
+                      id="passingScore"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={formData.passingScore}
+                      onChange={(e) => setFormData({ ...formData, passingScore: parseInt(e.target.value) })}
+                      disabled={isLoading}
+                    />
+                  </div>
 
-              <div>
-                <Label htmlFor="timeLimit">Límite de Tiempo (minutos)</Label>
-                <Input
-                  id="timeLimit"
-                  type="number"
-                  min="1"
-                  placeholder="Dejar en blanco = sin límite"
-                  value={formData.timeLimit}
-                  onChange={(e) => setFormData({ ...formData, timeLimit: e.target.value })}
-                />
-              </div>
+                  <div>
+                    <Label htmlFor="maxAttempts">Máximo de Intentos</Label>
+                    <Input
+                      id="maxAttempts"
+                      type="number"
+                      min="1"
+                      placeholder="Dejar en blanco = ilimitado"
+                      value={formData.maxAttempts}
+                      onChange={(e) => setFormData({ ...formData, maxAttempts: e.target.value })}
+                      disabled={isLoading}
+                    />
+                  </div>
 
-              <div className="flex items-center gap-3 pt-6">
-                <Checkbox
-                  id="shuffle"
-                  checked={formData.shuffleQuestions}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, shuffleQuestions: checked as boolean })
-                  }
-                />
-                <Label htmlFor="shuffle" className="font-normal cursor-pointer">
-                  Mezclar preguntas
-                </Label>
-              </div>
-            </div>
+                  <div>
+                    <Label htmlFor="timeLimit">Límite de Tiempo (minutos)</Label>
+                    <Input
+                      id="timeLimit"
+                      type="number"
+                      min="1"
+                      placeholder="Dejar en blanco = sin límite"
+                      value={formData.timeLimit}
+                      onChange={(e) => setFormData({ ...formData, timeLimit: e.target.value })}
+                      disabled={isLoading}
+                    />
+                  </div>
 
-            {/* Require All Topics */}
-            <div className="border-t pt-4">
-              <div className="flex items-start gap-3">
-                <Checkbox
-                  id="requireAllTopics"
-                  checked={formData.requireAllTopics}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, requireAllTopics: checked as boolean })
-                  }
-                />
-                <div className="flex-1">
-                  <Label htmlFor="requireAllTopics" className="font-normal cursor-pointer">
-                    Requerir Completación de Todos los Temas
-                  </Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Si está activado, los estudiantes deben marcar todos los temas como leídos 
-                    antes de poder tomar este cuestionario
-                  </p>
+                  <div className="flex items-center gap-3 pt-6">
+                    <Checkbox
+                      id="shuffle"
+                      checked={formData.shuffleQuestions}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, shuffleQuestions: checked as boolean })
+                      }
+                      disabled={isLoading}
+                    />
+                    <Label htmlFor="shuffle" className="font-normal cursor-pointer">
+                      Mezclar preguntas
+                    </Label>
+                  </div>
+                </div>
+
+                {/* Require All Topics */}
+                <div className="border-t pt-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="requireAllTopics"
+                      checked={formData.requireAllTopics}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, requireAllTopics: checked as boolean })
+                      }
+                      disabled={isLoading}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="requireAllTopics" className="font-normal cursor-pointer">
+                        Requerir Completación de Todos los Temas
+                      </Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Si está activado, los estudiantes deben marcar todos los temas como leídos 
+                        antes de poder tomar este cuestionario
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Diagnostic Quiz */}
+                <div className="border-t pt-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="isDiagnostic"
+                      checked={formData.isDiagnostic}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, isDiagnostic: checked as boolean })
+                      }
+                      disabled={isLoading}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="isDiagnostic" className="font-normal cursor-pointer">
+                        Es cuestionario diagnóstico inicial
+                      </Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Si está activado, los alumnos deberán contestarlo obligatoriamente al entrar al curso por primera vez. Solo tendrán 1 intento y no verán su calificación.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div className="flex justify-end gap-3 pt-6 border-t">
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCreateQuiz} disabled={isLoading}>
-              {isLoading ? "Creando..." : "Crear Cuestionario"}
-            </Button>
-          </div>
+              <div className="flex justify-end gap-3 pt-6 border-t">
+                <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleCreateQuiz} disabled={isLoading || !formData.title}>
+                  {isLoading ? "Creando..." : "Crear Cuestionario"}
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* DOCX Tab */}
+            <TabsContent value="docx" className="mt-4">
+              <DocxUploadForm 
+                courseId={course.id}
+                onClose={() => {
+                  setIsOpen(false)
+                  router.refresh()
+                }}
+              />
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
@@ -308,6 +375,11 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
                     )}
                   </div>
                   <div className="flex items-center gap-2">
+                    {quiz.isDiagnostic && (
+                      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                        Diagnóstico Inicial
+                      </Badge>
+                    )}
                     <Badge variant={quiz.isPublished ? "default" : "secondary"}>
                       {quiz.isPublished ? "Publicado" : "Borrador"}
                     </Badge>
