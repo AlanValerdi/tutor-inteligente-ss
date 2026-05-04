@@ -94,7 +94,11 @@ export function DocxPreviewModal({
         questions: validQuestions,
       })
 
-      // Redirigir a la página de cuestionario creado
+      // Cerrar el modal y refrescar para mostrar el nuevo cuestionario
+      onClose()
+      router.refresh()
+
+      // Redirigir a la página de cuestionario creado (por si estuvieran en otra ruta)
       if (topicId) {
         router.push(`/teacher/topics/${topicId}/quizzes`)
       } else if (courseId) {

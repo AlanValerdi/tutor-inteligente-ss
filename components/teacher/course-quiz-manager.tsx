@@ -17,6 +17,17 @@ import {
   TabsList,
   TabsTrigger
 } from "@/components/ui/tabs"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { PlusCircle, BookOpen, Trash2, Edit2, FileUp } from "lucide-react"
 import { createQuiz, updateQuiz, deleteQuiz } from "@/lib/actions/teacher"
 import { DocxUploadForm } from "./docx-upload-form"
@@ -144,10 +155,6 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
   }
 
   const handleDeleteQuiz = async (quizId: string) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar este cuestionario?")) {
-      return
-    }
-
     try {
       await deleteQuiz(quizId)
       setQuizzes(quizzes.filter(q => q.id !== quizId))
@@ -425,15 +432,36 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
                   >
                     {quiz.isPublished ? "Despublicar" : "Publicar"}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 text-red-600 hover:text-red-700"
-                    onClick={() => handleDeleteQuiz(quiz.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Eliminar
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Eliminar
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>¿Eliminar Cuestionario?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta acción no se puede deshacer. Se eliminarán permanentemente 
+                          las preguntas y los intentos de los estudiantes.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteQuiz(quiz.id)}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          Eliminar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </CardContent>
             </Card>

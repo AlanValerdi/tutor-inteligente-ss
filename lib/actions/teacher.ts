@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db"
 
 export async function getTeacherDashboardData() {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
@@ -129,7 +129,7 @@ export async function updateCourse(
   }
 ) {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
@@ -152,7 +152,7 @@ export async function updateCourse(
 
 export async function deleteCourse(courseId: string) {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
@@ -174,7 +174,7 @@ export async function deleteCourse(courseId: string) {
 
 export async function getStudentAnalytics() {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
@@ -315,7 +315,7 @@ export async function updateStudentProfile(
   profile: 'Visual' | 'Auditivo' | 'Kinestesico'
 ) {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
@@ -349,7 +349,7 @@ export async function updateStudentProfile(
 
 export async function getCourseTopics(courseId: string) {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
@@ -384,7 +384,7 @@ export async function createTopic(data: {
   order: number
 }) {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
@@ -418,7 +418,7 @@ export async function updateTopic(
   }
 ) {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
@@ -442,7 +442,7 @@ export async function updateTopic(
 
 export async function deleteTopic(topicId: string) {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
@@ -469,14 +469,14 @@ export async function deleteTopic(topicId: string) {
 
 export async function getTopicQuizzes(topicId: string) {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
 
   const topic = await prisma.topic.findUnique({
     where: { id: topicId },
-    include: { 
+    include: {
       course: true,
       quizzes: {
         include: {
@@ -526,7 +526,7 @@ export async function createQuiz(data: {
   isDiagnostic?: boolean
 }) {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
@@ -596,9 +596,9 @@ export async function updateQuiz(quizId: string, data: {
 
   const quiz = await prisma.quiz.findUnique({
     where: { id: quizId },
-    include: { 
-      topic: { include: { course: true } }, 
-      course: true 
+    include: {
+      topic: { include: { course: true } },
+      course: true
     }
   })
 
@@ -623,13 +623,13 @@ export async function deleteQuiz(quizId: string) {
 
   const quiz = await prisma.quiz.findUnique({
     where: { id: quizId },
-    include: { 
-      topic: { include: { course: true } }, 
-      course: true 
+    include: {
+      topic: { include: { course: true } },
+      course: true
     }
   })
 
-  
+
   const quizTeacherId = quiz?.course?.teacherId || quiz?.topic?.course?.teacherId
 
   if (!quiz || quizTeacherId !== session.user.id) {
@@ -653,7 +653,7 @@ export async function getQuizQuestions(quizId: string) {
 
   const quiz = await prisma.quiz.findUnique({
     where: { id: quizId },
-    include: { 
+    include: {
       topic: { include: { course: true } },
       course: true,
       questions: { orderBy: { order: "asc" } }
@@ -682,12 +682,12 @@ export async function createQuestion(data: {
   type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER"
   questionText: string
   imageUrl?: string
-  options: any 
+  options: any
   points?: number
   explanation?: string
 }) {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
@@ -695,7 +695,7 @@ export async function createQuestion(data: {
   // Buscamos el quiz para validar la autoría antes de crear la pregunta
   const quiz = await prisma.quiz.findUnique({
     where: { id: data.quizId },
-    include: { 
+    include: {
       topic: { include: { course: true } },
       course: true,
       questions: true // Lo necesitamos para calcular el orden (order)
@@ -743,13 +743,13 @@ export async function updateQuestion(questionId: string, data: {
 
   const question = await prisma.question.findUnique({
     where: { id: questionId },
-    include: { 
-      quiz: { 
-        include: { 
+    include: {
+      quiz: {
+        include: {
           topic: { include: { course: true } },
           course: true
-        } 
-      } 
+        }
+      }
     }
   })
 
@@ -768,7 +768,7 @@ export async function updateQuestion(questionId: string, data: {
 
 export async function deleteQuestion(questionId: string) {
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
@@ -776,13 +776,13 @@ export async function deleteQuestion(questionId: string) {
   // Buscamos la pregunta incluyendo toda la cadena de mando (Quiz -> Topic/Course -> Teacher)
   const question = await prisma.question.findUnique({
     where: { id: questionId },
-    include: { 
-      quiz: { 
-        include: { 
+    include: {
+      quiz: {
+        include: {
           topic: { include: { course: true } },
           course: true
-        } 
-      } 
+        }
+      }
     }
   })
 
@@ -808,9 +808,9 @@ export async function changeStudentLearningProfile(
   newProfile: "Visual" | "Auditivo" | "Kinestesico"
 ) {
   const { revalidatePath } = await import('next/cache')
-  
+
   const session = await auth()
-  
+
   if (!session?.user || session.user.role !== "TEACHER") {
     throw new Error("No autorizado")
   }
