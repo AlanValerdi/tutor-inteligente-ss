@@ -609,6 +609,13 @@ export async function updateQuiz(quizId: string, data: {
     throw new Error("Cuestionario no encontrado o no autorizado")
   }
 
+  if (data.isPublished === true) {
+    const questionsCount = await prisma.question.count({ where: { quizId } })
+    if (questionsCount === 0) {
+      throw new Error("El cuestionario debe tener al menos una pregunta antes de publicarse")
+    }
+  }
+
   return await prisma.quiz.update({
     where: { id: quizId },
     data

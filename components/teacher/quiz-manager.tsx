@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -65,6 +66,7 @@ interface QuizManagerProps {
 
 export function QuizManager({ topic, quizzes: initialQuizzes }: QuizManagerProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [createMode, setCreateMode] = useState<"manual" | "docx">("manual")
   const [submitted, setSubmitted] = useState(false)
@@ -180,8 +182,12 @@ export function QuizManager({ topic, quizzes: initialQuizzes }: QuizManagerProps
     try {
       await updateQuiz(quizId, { isPublished: !currentStatus })
       router.refresh()
-    } catch (error) {
-      console.error("Error updating quiz:", error)
+    } catch (error: any) {
+      toast({
+        title: "No se puede publicar",
+        description: error?.message || "Error al actualizar el cuestionario",
+        variant: "destructive",
+      })
     }
   }
 

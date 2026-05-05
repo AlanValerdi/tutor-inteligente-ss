@@ -60,16 +60,20 @@ interface QuizResultsProps {
   quiz: QuizData
   canRetry: boolean
   courseId: string
-  topicId: string
+  topicId?: string
 }
 
 export function QuizResults({ attempt, quiz, canRetry, courseId, topicId }: QuizResultsProps) {
   const router = useRouter()
-  
+
   const handleBackToTopic = async () => {
-    await invalidateDashboardCache(); // Limpia la caché de SWR
-    router.push(`/student/courses/${courseId}/topics/${topicId}`);
-    router.refresh(); // Fuerza a Next.js a pedir datos nuevos al servidor
+    await invalidateDashboardCache()
+    if (topicId) {
+      router.push(`/student/courses/${courseId}/topics/${topicId}`)
+    } else {
+      router.push(`/student/courses/${courseId}`)
+    }
+    router.refresh()
   };
 
   // Format time
@@ -254,12 +258,15 @@ export function QuizResults({ attempt, quiz, canRetry, courseId, topicId }: Quiz
               onClick={handleBackToTopic} 
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver al Tema
+              {topicId ? "Volver al Tema" : "Volver al Curso"}
             </Button>
           
           {canRetry && !attempt.passed && (
             <Button
-              onClick={() => router.push(`/student/courses/${courseId}/topics/${topicId}/quizzes/${quiz.id}/take`)}
+              onClick={() => topicId
+                ? router.push(`/student/courses/${courseId}/topics/${topicId}/quizzes/${quiz.id}/take`)
+                : router.push(`/student/courses/${courseId}/quizzes/${quiz.id}/take`)
+              }
             >
               <RotateCcw className="h-4 w-4 mr-2" />
               Reintentar Quiz
