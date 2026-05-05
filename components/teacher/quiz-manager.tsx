@@ -14,19 +14,22 @@ import {
   TabsList,
   TabsTrigger
 } from "@/components/ui/tabs"
-import { 
-  Plus, 
-  FileQuestion, 
-  Edit2, 
-  Trash2, 
-  Save, 
-  X, 
+import {
+  Plus,
+  FileQuestion,
+  Edit2,
+  Trash2,
+  Save,
+  X,
   CheckCircle2,
   Clock,
   Target,
   RotateCcw,
   ArrowLeft,
-  FileUp
+  FileUp,
+  ListChecks,
+  Eye,
+  EyeOff
 } from "lucide-react"
 import { createQuiz, updateQuiz, deleteQuiz } from "@/lib/actions/teacher"
 import { DocxUploadForm } from "./docx-upload-form"
@@ -500,36 +503,46 @@ export function QuizManager({ topic, quizzes: initialQuizzes }: QuizManagerProps
                           <Button
                             size="sm"
                             variant="outline"
+                            className="gap-2"
                             onClick={() => router.push(`/teacher/quizzes/${quiz.id}/questions`)}
                           >
+                            <ListChecks className="h-4 w-4" />
                             Gestionar Preguntas
                           </Button>
 
                           <Button
                             size="sm"
                             variant="ghost"
+                            className="gap-2"
                             onClick={() => handleEditStart(quiz)}
                           >
                             <Edit2 className="h-4 w-4" />
+                            Editar configuración
                           </Button>
 
                           <Button
                             size="sm"
                             variant="ghost"
+                            className="gap-2"
                             onClick={() => handleTogglePublish(quiz.id, quiz.isPublished)}
                           >
-                            {quiz.isPublished ? "Despublicar" : "Publicar"}
+                            {quiz.isPublished
+                              ? <><EyeOff className="h-4 w-4" />Despublicar</>
+                              : <><Eye className="h-4 w-4" />Publicar</>
+                            }
                           </Button>
 
                           <Button
                             size="sm"
                             variant="ghost"
+                            className="gap-2 text-destructive hover:text-destructive"
                             onClick={() => {
                               setQuizToDelete(quiz.id)
                               setDeleteDialogOpen(true)
                             }}
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Trash2 className="h-4 w-4" />
+                            Eliminar
                           </Button>
                         </div>
                       </div>

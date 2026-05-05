@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckCircle2, Lock, Circle, BookOpen, Users } from "lucide-react"
+import { CheckCircle2, Lock, Circle, BookOpen, Users, ClipboardList } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -58,6 +58,12 @@ interface CourseDetails {
   }
 }
 
+interface FinalQuiz {
+  id: string
+  title: string
+  description: string | null
+}
+
 interface CourseViewProps {
   course: CourseDetails
   courseId: string
@@ -67,16 +73,18 @@ interface CourseViewProps {
   completedTopics?: number
   enrollment?: any;
   diagnosticCompleted?: boolean;
+  finalQuizzes?: FinalQuiz[];
 }
 
-export function CourseViewAdapter({ 
-  course, 
-  courseId, 
+export function CourseViewAdapter({
+  course,
+  courseId,
   studentProfile = "Visual",
   initialProgress = 0,
   completedTopics = 0,
   enrollment,    // Valor que viene de la DB
-  diagnosticCompleted
+  diagnosticCompleted,
+  finalQuizzes = [],
 }: CourseViewProps) {
   const router = useRouter()
   
@@ -209,6 +217,35 @@ const totalAvailableTopics = availableTopics.length;
               })}
           </div>
         </div>
+
+        {completedTopics >= totalAvailableTopics && totalAvailableTopics > 0 && finalQuizzes.length > 0 && (
+          <div className="mt-8">
+            <h2 className="mb-4 font-display text-lg font-semibold text-foreground flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-primary" />
+              Evaluación Final
+            </h2>
+            <div className="space-y-3">
+              {finalQuizzes.map((quiz) => (
+                <Card key={quiz.id} className="border-primary/30 bg-primary/5">
+                  <CardContent className="p-6 flex items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-semibold text-foreground">{quiz.title}</h3>
+                      {quiz.description && (
+                        <p className="text-sm text-muted-foreground mt-1">{quiz.description}</p>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => router.push(`/student/courses/${courseId}/quizzes/${quiz.id}/take`)}
+                    >
+                      Iniciar evaluación
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {availableTopics.length === 0 && (
           <Card className="border-dashed border-2 border-muted">

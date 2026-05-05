@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { AlertCircle, Trash2, Check, X } from "lucide-react"
 import { ExtractedQuestion } from "@/lib/types/docx"
 import { createQuizFromDocx } from "@/lib/actions/teacher"
@@ -51,8 +52,7 @@ export function DocxPreviewModal({
   const [maxAttempts, setMaxAttempts] = useState("")
   const [timeLimit, setTimeLimit] = useState("")
   const [shuffleQuestions, setShuffleQuestions] = useState(false)
-  const [requireAllTopics, setRequireAllTopics] = useState(false)
-  const [isDiagnostic, setIsDiagnostic] = useState(false)
+  const [quizType, setQuizType] = useState<"diagnostic" | "final" | "">(courseId && !topicId ? "" : "final")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -76,6 +76,11 @@ export function DocxPreviewModal({
       return
     }
 
+    if (courseId && !topicId && !quizType) {
+      setError("Debes seleccionar el tipo de cuestionario (diagnóstico o evaluación final)")
+      return
+    }
+
     setLoading(true)
     setError(null)
 
@@ -89,8 +94,8 @@ export function DocxPreviewModal({
         maxAttempts: maxAttempts ? parseInt(maxAttempts) : undefined,
         timeLimit: timeLimit ? parseInt(timeLimit) : undefined,
         shuffleQuestions,
-        requireAllTopics,
-        isDiagnostic,
+        requireAllTopics: quizType === "final",
+        isDiagnostic: quizType === "diagnostic",
         questions: validQuestions,
       })
 
@@ -203,46 +208,43 @@ export function DocxPreviewModal({
             </div>
           </div>
 
-          {/* Require All Topics */}
-          <div className="pb-4 border-b">
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="requireAllTopics"
-                checked={requireAllTopics}
-                onCheckedChange={(checked) => setRequireAllTopics(checked as boolean)}
+          {/* Quiz Type — solo para quizzes de curso */}
+          {courseId && !topicId && (
+            <div className="pb-4 border-b">
+              <Label className="mb-3 block font-medium">
+                Tipo de cuestionario <span className="text-destructive">*</span>
+              </Label>
+              <RadioGroup
+                value={quizType}
+                onValueChange={(value) => setQuizType(value as "diagnostic" | "final")}
                 disabled={loading}
-              />
-              <div className="flex-1">
-                <Label htmlFor="requireAllTopics" className="font-normal cursor-pointer">
-                  Requerir Completación de Todos los Temas
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Si está activado, los estudiantes deben marcar todos los temas como leídos 
-                  antes de poder tomar este cuestionario
-                </p>
-              </div>
+                className="space-y-3"
+              >
+                <div className="flex items-start gap-3">
+                  <RadioGroupItem value="diagnostic" id="docx-type-diagnostic" className="mt-0.5" />
+                  <div className="flex-1">
+                    <Label htmlFor="docx-type-diagnostic" className="font-normal cursor-pointer">
+                      Diagnóstico inicial
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Los alumnos deberán contestarlo obligatoriamente al entrar al curso por primera vez. Solo tendrán 1 intento y no verán su calificación.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <RadioGroupItem value="final" id="docx-type-final" className="mt-0.5" />
+                  <div className="flex-1">
+                    <Label htmlFor="docx-type-final" className="font-normal cursor-pointer">
+                      Evaluación final
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Se mostrará automáticamente cuando el alumno complete todos los temas del curso.
+                    </p>
+                  </div>
+                </div>
+              </RadioGroup>
             </div>
-          </div>
-
-          {/* Diagnostic Quiz */}
-          <div className="pb-4 border-b">
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="isDiagnostic"
-                checked={isDiagnostic}
-                onCheckedChange={(checked) => setIsDiagnostic(checked as boolean)}
-                disabled={loading}
-              />
-              <div className="flex-1">
-                <Label htmlFor="isDiagnostic" className="font-normal cursor-pointer">
-                  Es cuestionario diagnóstico inicial
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Si está activado, los alumnos deberán contestarlo obligatoriamente al entrar al curso por primera vez. Solo tendrán 1 intento y no verán su calificación.
-                </p>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Resumen */}
           <div className="flex gap-3">

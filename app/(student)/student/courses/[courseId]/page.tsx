@@ -70,6 +70,18 @@ export default async function StudentCoursePage({ params, searchParams }: Course
     }
   }
 
+  // Get final quizzes (requireAllTopics, published, not diagnostic)
+  const finalQuizzes = await prisma.quiz.findMany({
+    where: {
+      courseId: courseId,
+      requireAllTopics: true,
+      isDiagnostic: false,
+      isPublished: true,
+    },
+    select: { id: true, title: true, description: true },
+    orderBy: { createdAt: "asc" },
+  })
+
   // Get the student's current profile from database (fresh data, not from session JWT)
   const student = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -137,8 +149,9 @@ export default async function StudentCoursePage({ params, searchParams }: Course
           // Estas líneas son las que activan la barra y quitan los candados:
           initialProgress={enrollment.progress}
           completedTopics={enrollment.completedTopics}
-          enrollment={enrollment as any} 
+          enrollment={enrollment as any}
           diagnosticCompleted={diagnostic === "completed"}
+          finalQuizzes={finalQuizzes}
         />
       </div>
     </div>

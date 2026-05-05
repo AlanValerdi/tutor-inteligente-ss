@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, Users, MoreVertical, Eye, Edit, Trash2, FileText, ClipboardList } from "lucide-react"
+import { BookOpen, Users, MoreVertical, Eye, Edit, Trash2, FileText, ClipboardList, Globe, EyeOff } from "lucide-react"
 import { useRouter } from "next/navigation"
 import {
   DropdownMenu,
@@ -175,7 +175,10 @@ export function TeacherCoursesList({ courses }: TeacherCoursesListProps) {
                         Editar Curso
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleTogglePublish(course.id, course.isPublished)}>
-                        {course.isPublished ? "Despublicar" : "Publicar"}
+                        {course.isPublished
+                          ? <><EyeOff className="h-4 w-4 mr-2" />Despublicar</>
+                          : <><Globe className="h-4 w-4 mr-2" />Publicar</>
+                        }
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         className="text-destructive"

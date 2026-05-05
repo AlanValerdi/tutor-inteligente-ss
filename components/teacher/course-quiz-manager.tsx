@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { 
+import {
   Tabs,
   TabsContent,
   TabsList,
@@ -28,7 +28,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { PlusCircle, BookOpen, Trash2, Edit2, FileUp } from "lucide-react"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { PlusCircle, BookOpen, Trash2, Edit2, FileUp, ListChecks, Eye, EyeOff, Save, X } from "lucide-react"
 import { createQuiz, updateQuiz, deleteQuiz } from "@/lib/actions/teacher"
 import { DocxUploadForm } from "./docx-upload-form"
 
@@ -75,15 +76,76 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
     maxAttempts: "",
     timeLimit: "",
     shuffleQuestions: false,
-    requireAllTopics: false,
-    isDiagnostic: false,
+    quizType: "" as "diagnostic" | "final" | "",
   })
+
+  // Edit state
+  const [editingQuizId, setEditingQuizId] = useState<string | null>(null)
+  const [editData, setEditData] = useState({
+    title: "",
+    description: "",
+    passingScore: 70,
+    maxAttempts: "",
+    timeLimit: "",
+  })
+
+  const handleEditStart = (quiz: Quiz) => {
+    setEditingQuizId(quiz.id)
+    setEditData({
+      title: quiz.title,
+      description: quiz.description || "",
+      passingScore: quiz.passingScore,
+      maxAttempts: quiz.maxAttempts?.toString() || "",
+      timeLimit: quiz.timeLimit?.toString() || "",
+    })
+  }
+
+  const handleEditSave = async (quizId: string) => {
+    setIsLoading(true)
+    try {
+      await updateQuiz(quizId, {
+        title: editData.title,
+        description: editData.description || undefined,
+        passingScore: editData.passingScore,
+        maxAttempts: editData.maxAttempts ? parseInt(editData.maxAttempts) : undefined,
+        timeLimit: editData.timeLimit ? parseInt(editData.timeLimit) : undefined,
+      })
+      setQuizzes(quizzes.map(q =>
+        q.id === quizId
+          ? {
+              ...q,
+              title: editData.title,
+              description: editData.description || null,
+              passingScore: editData.passingScore,
+              maxAttempts: editData.maxAttempts ? parseInt(editData.maxAttempts) : null,
+              timeLimit: editData.timeLimit ? parseInt(editData.timeLimit) : null,
+            }
+          : q
+      ))
+      setEditingQuizId(null)
+      toast({ title: "Éxito", description: "Cuestionario actualizado" })
+    } catch (error) {
+      console.error("Error updating quiz:", error)
+      toast({ title: "Error", description: "No se pudo actualizar el cuestionario", variant: "destructive" })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleCreateQuiz = async () => {
     if (!formData.title.trim()) {
       toast({
         title: "Error",
         description: "El título del cuestionario es requerido",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!formData.quizType) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar el tipo de cuestionario (diagnóstico o evaluación final)",
         variant: "destructive",
       })
       return
@@ -100,8 +162,8 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
         maxAttempts: formData.maxAttempts ? parseInt(formData.maxAttempts) : undefined,
         timeLimit: formData.timeLimit ? parseInt(formData.timeLimit) : undefined,
         shuffleQuestions: formData.shuffleQuestions,
-        requireAllTopics: formData.requireAllTopics,
-        isDiagnostic: formData.isDiagnostic,
+        requireAllTopics: formData.quizType === "final",
+        isDiagnostic: formData.quizType === "diagnostic",
       })
 
       // Add the new quiz to the list
@@ -115,8 +177,7 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
         maxAttempts: "",
         timeLimit: "",
         shuffleQuestions: false,
-        requireAllTopics: false,
-        isDiagnostic: false,
+        quizType: "",
       })
 
       setIsOpen(false)
@@ -288,49 +349,42 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
                   </div>
                 </div>
 
-                {/* Require All Topics */}
+                {/* Quiz Type (required) */}
                 <div className="border-t pt-4">
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      id="requireAllTopics"
-                      checked={formData.requireAllTopics}
-                      onCheckedChange={(checked) =>
-                        setFormData({ ...formData, requireAllTopics: checked as boolean })
-                      }
-                      disabled={isLoading}
-                    />
-                    <div className="flex-1">
-                      <Label htmlFor="requireAllTopics" className="font-normal cursor-pointer">
-                        Requerir Completación de Todos los Temas
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Si está activado, los estudiantes deben marcar todos los temas como leídos 
-                        antes de poder tomar este cuestionario
-                      </p>
+                  <Label className="mb-3 block font-medium">
+                    Tipo de cuestionario <span className="text-destructive">*</span>
+                  </Label>
+                  <RadioGroup
+                    value={formData.quizType}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, quizType: value as "diagnostic" | "final" })
+                    }
+                    disabled={isLoading}
+                    className="space-y-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      <RadioGroupItem value="diagnostic" id="type-diagnostic" className="mt-0.5" />
+                      <div className="flex-1">
+                        <Label htmlFor="type-diagnostic" className="font-normal cursor-pointer">
+                          Diagnóstico inicial
+                        </Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Los alumnos deberán contestarlo obligatoriamente al entrar al curso por primera vez. Solo tendrán 1 intento y no verán su calificación.
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Diagnostic Quiz */}
-                <div className="border-t pt-4">
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      id="isDiagnostic"
-                      checked={formData.isDiagnostic}
-                      onCheckedChange={(checked) =>
-                        setFormData({ ...formData, isDiagnostic: checked as boolean })
-                      }
-                      disabled={isLoading}
-                    />
-                    <div className="flex-1">
-                      <Label htmlFor="isDiagnostic" className="font-normal cursor-pointer">
-                        Es cuestionario diagnóstico inicial
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Si está activado, los alumnos deberán contestarlo obligatoriamente al entrar al curso por primera vez. Solo tendrán 1 intento y no verán su calificación.
-                      </p>
+                    <div className="flex items-start gap-3">
+                      <RadioGroupItem value="final" id="type-final" className="mt-0.5" />
+                      <div className="flex-1">
+                        <Label htmlFor="type-final" className="font-normal cursor-pointer">
+                          Evaluación final
+                        </Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Se mostrará automáticamente cuando el alumno complete todos los temas del curso.
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  </RadioGroup>
                 </div>
               </div>
 
@@ -338,7 +392,7 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
                 <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading}>
                   Cancelar
                 </Button>
-                <Button onClick={handleCreateQuiz} disabled={isLoading || !formData.title}>
+                <Button onClick={handleCreateQuiz} disabled={isLoading || !formData.title || !formData.quizType}>
                   {isLoading ? "Creando..." : "Crear Cuestionario"}
                 </Button>
               </div>
@@ -373,97 +427,184 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
         <div className="space-y-3">
           {courseQuizzes.map((quiz) => (
             <Card key={quiz.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{quiz.title}</CardTitle>
-                    {quiz.description && (
-                      <CardDescription className="mt-1">{quiz.description}</CardDescription>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {quiz.isDiagnostic && (
-                      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                        Diagnóstico Inicial
-                      </Badge>
-                    )}
-                    <Badge variant={quiz.isPublished ? "default" : "secondary"}>
-                      {quiz.isPublished ? "Publicado" : "Borrador"}
-                    </Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              {editingQuizId === quiz.id ? (
+                <CardContent className="p-6 space-y-4">
                   <div>
-                    <p className="text-xs text-muted-foreground">Puntuación Mínima</p>
-                    <p className="font-medium">{quiz.passingScore}%</p>
+                    <Label>Título</Label>
+                    <Input
+                      value={editData.title}
+                      onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                      disabled={isLoading}
+                    />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Máx. Intentos</p>
-                    <p className="font-medium">{quiz.maxAttempts || "Ilimitado"}</p>
+                    <Label>Descripción</Label>
+                    <Textarea
+                      value={editData.description}
+                      onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                      rows={2}
+                      disabled={isLoading}
+                    />
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Límite de Tiempo</p>
-                    <p className="font-medium">{quiz.timeLimit ? `${quiz.timeLimit} min` : "Sin límite"}</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label>Puntuación Mínima (%)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={editData.passingScore}
+                        onChange={(e) => setEditData({ ...editData, passingScore: parseInt(e.target.value) || 70 })}
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div>
+                      <Label>Máx. Intentos</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="Ilimitado"
+                        value={editData.maxAttempts}
+                        onChange={(e) => setEditData({ ...editData, maxAttempts: e.target.value })}
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div>
+                      <Label>Límite de Tiempo (min)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="Sin límite"
+                        value={editData.timeLimit}
+                        onChange={(e) => setEditData({ ...editData, timeLimit: e.target.value })}
+                        disabled={isLoading}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Requisitos</p>
-                    <p className="font-medium text-sm">
-                      {quiz.requireAllTopics ? "Todos los temas" : "Ninguno"}
-                    </p>
+                  <div className="flex gap-2">
+                    <Button size="sm" className="gap-2" onClick={() => handleEditSave(quiz.id)} disabled={isLoading || !editData.title}>
+                      <Save className="h-4 w-4" />
+                      Guardar
+                    </Button>
+                    <Button size="sm" variant="outline" className="gap-2" onClick={() => setEditingQuizId(null)} disabled={isLoading}>
+                      <X className="h-4 w-4" />
+                      Cancelar
+                    </Button>
                   </div>
-                </div>
+                </CardContent>
+              ) : (
+                <>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{quiz.title}</CardTitle>
+                        {quiz.description && (
+                          <CardDescription className="mt-1">{quiz.description}</CardDescription>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {quiz.isDiagnostic && (
+                          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                            Diagnóstico Inicial
+                          </Badge>
+                        )}
+                        {quiz.requireAllTopics && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            Evaluación Final
+                          </Badge>
+                        )}
+                        <Badge variant={quiz.isPublished ? "default" : "secondary"}>
+                          {quiz.isPublished ? "Publicado" : "Borrador"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Puntuación Mínima</p>
+                        <p className="font-medium">{quiz.passingScore}%</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Máx. Intentos</p>
+                        <p className="font-medium">{quiz.maxAttempts || "Ilimitado"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Límite de Tiempo</p>
+                        <p className="font-medium">{quiz.timeLimit ? `${quiz.timeLimit} min` : "Sin límite"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Tipo</p>
+                        <p className="font-medium text-sm">
+                          {quiz.isDiagnostic ? "Diagnóstico" : quiz.requireAllTopics ? "Final" : "—"}
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => router.push(`/teacher/quizzes/${quiz.id}/questions`)}
-                  >
-                    <Edit2 className="h-4 w-4" />
-                    Editar Preguntas
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleTogglePublish(quiz.id, quiz.isPublished)}
-                  >
-                    {quiz.isPublished ? "Despublicar" : "Publicar"}
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
+                    <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="gap-2 text-red-600 hover:text-red-700"
+                        className="gap-2"
+                        onClick={() => router.push(`/teacher/quizzes/${quiz.id}/questions`)}
                       >
-                        <Trash2 className="h-4 w-4" />
-                        Eliminar
+                        <ListChecks className="h-4 w-4" />
+                        Gestionar Preguntas
                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar Cuestionario?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Esta acción no se puede deshacer. Se eliminarán permanentemente 
-                          las preguntas y los intentos de los estudiantes.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDeleteQuiz(quiz.id)}
-                          className="bg-red-600 hover:bg-red-700"
-                        >
-                          Eliminar
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </CardContent>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => handleEditStart(quiz)}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                        Editar configuración
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => handleTogglePublish(quiz.id, quiz.isPublished)}
+                      >
+                        {quiz.isPublished
+                          ? <><EyeOff className="h-4 w-4" />Despublicar</>
+                          : <><Eye className="h-4 w-4" />Publicar</>
+                        }
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Eliminar
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar Cuestionario?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción no se puede deshacer. Se eliminarán permanentemente
+                              las preguntas y los intentos de los estudiantes.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteQuiz(quiz.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Eliminar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </CardContent>
+                </>
+              )}
             </Card>
           ))}
         </div>
