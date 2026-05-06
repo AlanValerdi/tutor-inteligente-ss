@@ -50,7 +50,7 @@ export function StudentLayoutSidebar({ studentName, studyProfile }: StudentLayou
           </div>
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <h2 className="font-display text-sm font-semibold text-sidebar-foreground">LearnFlow</h2>
+              <h2 className="font-display text-sm font-semibold text-sidebar-foreground">Tutor Inteligente</h2>
               <p className="text-xs text-sidebar-foreground/60">Portal Estudiante</p>
             </div>
           )}

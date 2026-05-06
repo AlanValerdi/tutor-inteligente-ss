@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' })
 
 export const metadata: Metadata = {
-  title: 'LearnFlow LMS - Plataforma de Aprendizaje Adaptativo',
+  title: 'Tutor Inteligente - Plataforma de Aprendizaje Adaptativo',
   description: 'Un sistema de gestion de aprendizaje adaptativo moderno con perfiles de estudio personalizados, evaluaciones diagnosticas y analitica estudiantil en tiempo real.',
 }
 
