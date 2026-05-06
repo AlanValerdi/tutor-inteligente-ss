@@ -217,8 +217,8 @@ export function TopicCreatorData({ course, topics: initialTopics }: TopicCreator
                               </p>
                             </div>
                             <div className="flex gap-1">
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => router.push(`/teacher/topics/${topic.id}/quizzes`)}
                               >

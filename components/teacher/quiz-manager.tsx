@@ -508,7 +508,7 @@ export function QuizManager({ topic, quizzes: initialQuizzes }: QuizManagerProps
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
-                            variant="outline"
+                            variant="ghost"
                             className="gap-2"
                             onClick={() => router.push(`/teacher/quizzes/${quiz.id}/questions`)}
                           >
