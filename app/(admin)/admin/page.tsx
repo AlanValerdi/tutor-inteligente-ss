@@ -99,7 +99,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="px-8 py-8">
+      <div className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
         <div className="mb-8">
           <h1 className="mb-1 font-display text-2xl font-bold text-foreground">Panel Administrativo</h1>
           <p className="text-muted-foreground">Bienvenido, {session.user.name}</p>

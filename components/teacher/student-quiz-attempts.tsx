@@ -81,12 +81,12 @@ export function StudentQuizAttempts({ quizAttempts, courses }: StudentQuizAttemp
               className="cursor-pointer hover:bg-muted/50 transition-colors"
               onClick={() => setExpandedAttempt(expandedAttempt === studentId ? null : studentId)}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex-1 min-w-0">
                   <CardTitle className="text-lg">{user.name}</CardTitle>
                   <CardDescription>{user.email}</CardDescription>
                 </div>
-                <div className="text-right pr-4">
+                <div className="flex flex-wrap items-center gap-2 sm:text-right sm:pr-4">
                   <div className="text-sm font-medium mb-1">
                     {attempts.filter(a => a.passed).length}/{attempts.length} Aprobados
                   </div>
@@ -109,14 +109,14 @@ export function StudentQuizAttempts({ quizAttempts, courses }: StudentQuizAttemp
                       key={attempt.id}
                       className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
+                        <div className="flex-1 min-w-0">
                           <p className="font-medium">{attempt.quiz.title}</p>
                           <p className="text-sm text-muted-foreground">
                             {new Date(attempt.startedAt).toLocaleDateString()} - {formatTime(attempt.timeSpent)}
                           </p>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
                           <Badge variant={attempt.passed ? "default" : "destructive"}>
                             {attempt.score}%
                           </Badge>
@@ -134,7 +134,7 @@ export function StudentQuizAttempts({ quizAttempts, courses }: StudentQuizAttemp
                       </div>
 
                       {/* Quick metrics preview */}
-                      <div className="grid grid-cols-5 gap-2 text-xs bg-muted/30 p-2 rounded">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-xs bg-muted/30 p-2 rounded">
                         <div className="text-center">
                           <div className="font-medium">{attempt.tabSwitches}</div>
                           <div className="text-muted-foreground">Cambios Tab</div>
@@ -178,7 +178,7 @@ export function StudentQuizAttempts({ quizAttempts, courses }: StudentQuizAttemp
 
             <div className="space-y-4">
               {/* Score */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-3 bg-muted rounded-lg text-center">
                   <div className="text-2xl font-bold text-green-600">{selectedAttempt.score}%</div>
                   <div className="text-sm text-muted-foreground">Puntuación</div>

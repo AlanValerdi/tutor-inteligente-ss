@@ -447,7 +447,7 @@ export function QuizTaker({ quiz, questions, courseId, topicId, userId }: QuizTa
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">{quiz.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">{quiz.title}</h1>
           {quiz.description && (
             <p className="text-muted-foreground">{quiz.description}</p>
           )}

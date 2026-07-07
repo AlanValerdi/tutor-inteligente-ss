@@ -13,8 +13,8 @@ interface ImageBlockEditorProps {
 export function ImageBlockEditor({ block, onChange }: ImageBlockEditorProps) {
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex gap-4 items-start">
-        <div className="flex-1 space-y-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="flex-1 space-y-4 min-w-0">
           <div className="space-y-2">
             <Label htmlFor={`url-${block.id}`}>URL de la imagen (Link externo por ahora)</Label>
             <Input
@@ -45,7 +45,7 @@ export function ImageBlockEditor({ block, onChange }: ImageBlockEditorProps) {
         </div>
         
         {/* Preview */}
-        <div className="w-1/3 min-h-[150px] border rounded-md bg-muted/20 flex flex-col items-center justify-center overflow-hidden">
+        <div className="w-full sm:w-1/3 min-h-[150px] border rounded-md bg-muted/20 flex flex-col items-center justify-center overflow-hidden shrink-0">
           {block.url ? (
             <img src={block.url} alt={block.altText || "Preview"} className="max-w-full max-h-[200px] object-contain" />
           ) : (

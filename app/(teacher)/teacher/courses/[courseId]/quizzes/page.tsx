@@ -43,7 +43,7 @@ export default async function CourseQuizzesPage({ params }: CourseQuizzesPagePro
   }
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
       {/* Header with back button */}
       <div className="mb-8">
         <Button variant="ghost" asChild className="gap-2 mb-6">
@@ -52,7 +52,7 @@ export default async function CourseQuizzesPage({ params }: CourseQuizzesPagePro
             Volver
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold mb-1">Cuestionarios del Curso</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-1">Cuestionarios del Curso</h1>
         <p className="text-muted-foreground">
           {course.title} - Gestiona cuestionarios a nivel de curso
         </p>

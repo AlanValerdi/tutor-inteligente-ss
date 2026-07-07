@@ -1,8 +1,15 @@
 "use client"
 
-import { GraduationCap, LayoutDashboard, Key, User, LogOut, PanelLeftClose, PanelLeft } from "lucide-react"
+import {
+  GraduationCap,
+  LayoutDashboard,
+  Key,
+  User,
+  LogOut,
+  PanelLeftClose,
+  PanelLeft,
+} from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
-import { useState } from "react"
 import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -11,21 +18,39 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface StudentLayoutSidebarProps {
   studentName: string
   studyProfile: string
+  collapsed: boolean
+  onToggle: () => void
+  isMobile?: boolean
+  onMobileClose?: () => void
 }
 
-export function StudentLayoutSidebar({ studentName, studyProfile }: StudentLayoutSidebarProps) {
+export function StudentLayoutSidebar({
+  studentName,
+  studyProfile,
+  collapsed,
+  onToggle,
+  isMobile = false,
+  onMobileClose,
+}: StudentLayoutSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const [collapsed, setCollapsed] = useState(false)
 
   const navItems = [
     { href: "/student", label: "Panel Principal", icon: LayoutDashboard },
     { href: "/student/enroll", label: "Inscribirse a Curso", icon: Key },
   ]
 
+  const expanded = isMobile || !collapsed
+
   const handleExit = async () => {
     await signOut({ redirect: false })
     router.push("/login")
+    onMobileClose?.()
+  }
+
+  const handleNavigate = (href: string) => {
+    router.push(href)
+    onMobileClose?.()
   }
 
   const isActive = (href: string) => {
@@ -37,18 +62,22 @@ export function StudentLayoutSidebar({ studentName, studyProfile }: StudentLayou
 
   return (
     <TooltipProvider delayDuration={0}>
-      <aside className={cn(
-        "flex h-screen flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 shrink-0",
-        collapsed ? "w-16" : "w-64"
-      )}>
-        <div className={cn(
-          "flex items-center border-b border-sidebar-border px-3 py-5",
-          collapsed ? "justify-center" : "gap-3 px-5"
-        )}>
+      <aside
+        className={cn(
+          "flex h-screen shrink-0 flex-col bg-sidebar text-sidebar-foreground transition-all duration-300",
+          expanded ? "w-64" : "w-16"
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center border-b border-sidebar-border px-3 py-5",
+            expanded ? "gap-3 px-5" : "justify-center"
+          )}
+        >
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary">
             <GraduationCap className="h-5 w-5 text-sidebar-primary-foreground" />
           </div>
-          {!collapsed && (
+          {expanded && (
             <div className="min-w-0 flex-1">
               <h2 className="font-display text-sm font-semibold text-sidebar-foreground">Tutor Inteligente</h2>
               <p className="text-xs text-sidebar-foreground/60">Portal Estudiante</p>
@@ -56,18 +85,20 @@ export function StudentLayoutSidebar({ studentName, studyProfile }: StudentLayou
           )}
         </div>
 
-        <div className={cn("px-3 pt-3", collapsed ? "flex justify-center" : "flex justify-end")}>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setCollapsed(!collapsed)}
-            className="h-8 w-8 text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-          >
-            {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-            <span className="sr-only">{collapsed ? "Expandir menu" : "Colapsar menu"}</span>
-          </Button>
-        </div>
+        {!isMobile && (
+          <div className={cn("hidden px-3 pt-3 md:flex", expanded ? "justify-end" : "justify-center")}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onToggle}
+              className="h-8 w-8 text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            >
+              {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+              <span className="sr-only">{collapsed ? "Expandir menu" : "Colapsar menu"}</span>
+            </Button>
+          </div>
+        )}
 
         <nav className="flex-1 px-3 py-2">
           <ul className="flex flex-col gap-1" role="list">
@@ -76,28 +107,30 @@ export function StudentLayoutSidebar({ studentName, studyProfile }: StudentLayou
               const btn = (
                 <button
                   type="button"
-                  onClick={() => router.push(item.href)}
+                  onClick={() => handleNavigate(item.href)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                    collapsed && "justify-center px-0",
+                    !expanded && "justify-center px-0",
                     active
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                   )}
                 >
                   <item.icon className="h-4 w-4 shrink-0" />
-                  {!collapsed && item.label}
+                  {expanded && item.label}
                 </button>
               )
 
               return (
                 <li key={item.href}>
-                  {collapsed ? (
+                  {!expanded && !isMobile ? (
                     <Tooltip>
                       <TooltipTrigger asChild>{btn}</TooltipTrigger>
                       <TooltipContent side="right">{item.label}</TooltipContent>
                     </Tooltip>
-                  ) : btn}
+                  ) : (
+                    btn
+                  )}
                 </li>
               )
             })}
@@ -105,7 +138,7 @@ export function StudentLayoutSidebar({ studentName, studyProfile }: StudentLayou
         </nav>
 
         <div className="border-t border-sidebar-border px-3 py-4">
-          {!collapsed && (
+          {expanded && (
             <div className="mb-3 flex items-center gap-3 px-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground">
                 <User className="h-4 w-4" />
@@ -116,7 +149,7 @@ export function StudentLayoutSidebar({ studentName, studyProfile }: StudentLayou
               </div>
             </div>
           )}
-          {collapsed ? (
+          {!expanded && !isMobile ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button

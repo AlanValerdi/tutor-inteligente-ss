@@ -22,8 +22,8 @@ export default async function TeacherDashboardPage() {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="px-8 py-8">
-        <div className="mb-8 flex items-center justify-between">
+      <div className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="mb-1 font-display text-2xl font-bold text-foreground">Panel del Profesor</h1>
             <p className="text-muted-foreground">Bienvenido, {session.user.name}</p>

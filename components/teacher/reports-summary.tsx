@@ -96,7 +96,7 @@ export function ReportsSummary({ courses, quizAttempts }: ReportsSummaryProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{totalAttempts}</div>
+            <div className="text-2xl sm:text-3xl font-bold">{totalAttempts}</div>
             <p className="text-xs text-muted-foreground mt-1">
               {passedAttempts} aprobados ({passRate}%)
             </p>
@@ -111,7 +111,7 @@ export function ReportsSummary({ courses, quizAttempts }: ReportsSummaryProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
+            <div className="text-2xl sm:text-3xl font-bold">
               {new Set(quizAttempts.map(a => a.user.id)).size}
             </div>
             <p className="text-xs text-muted-foreground mt-1">

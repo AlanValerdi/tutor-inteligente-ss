@@ -98,10 +98,10 @@ export function TeacherCoursesList({ courses }: TeacherCoursesListProps) {
             {courses.map((course) => (
               <div
                 key={course.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                className="flex flex-col gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-1">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-3 mb-1">
                     <h3 className="font-semibold text-lg">{course.title}</h3>
                     <Badge variant={course.isPublished ? "default" : "secondary"}>
                       {course.isPublished ? "Publicado" : "Borrador"}
@@ -114,7 +114,7 @@ export function TeacherCoursesList({ courses }: TeacherCoursesListProps) {
                     </p>
                   )}
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <BookOpen className="h-4 w-4" />
                       {course.topicsCount} temas
@@ -138,11 +138,11 @@ export function TeacherCoursesList({ courses }: TeacherCoursesListProps) {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="gap-2"
+                    className="gap-2 hidden sm:inline-flex"
                     onClick={() => router.push(`/teacher/courses/${course.id}/quizzes`)}
                   >
                     <ClipboardList className="h-4 w-4" />
@@ -152,7 +152,7 @@ export function TeacherCoursesList({ courses }: TeacherCoursesListProps) {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="gap-2"
+                    className="gap-2 hidden sm:inline-flex"
                     onClick={() => router.push(`/teacher/courses/${course.id}/topics`)}
                   >
                     <FileText className="h-4 w-4" />
@@ -166,6 +166,14 @@ export function TeacherCoursesList({ courses }: TeacherCoursesListProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => router.push(`/teacher/courses/${course.id}/quizzes`)} className="sm:hidden">
+                        <ClipboardList className="h-4 w-4 mr-2" />
+                        Cuestionarios
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push(`/teacher/courses/${course.id}/topics`)} className="sm:hidden">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Temas
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => router.push(`/teacher/courses/${course.id}`)}>
                         <Eye className="h-4 w-4 mr-2" />
                         Ver Detalles

@@ -193,7 +193,7 @@ export function QuizManager({ topic, quizzes: initialQuizzes }: QuizManagerProps
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="px-8 py-8">
+      <div className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
         <div className="mb-8">
           <div className="mb-6">
             <Button
@@ -404,7 +404,7 @@ export function QuizManager({ topic, quizzes: initialQuizzes }: QuizManagerProps
                         />
                       </div>
 
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label>Nota Mínima (%)</Label>
                           <Input

@@ -58,10 +58,10 @@ export default async function TeacherReportsPage() {
   })
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-1">Reportes de Evaluaciones</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-1">Reportes de Evaluaciones</h1>
         <p className="text-muted-foreground">
           Visualiza resultados detallados de cuestionarios e indicadores de ansiedad estudiantil
         </p>

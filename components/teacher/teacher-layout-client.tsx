@@ -1,7 +1,8 @@
 "use client"
 
 import { TeacherSidebar } from "@/components/teacher/teacher-sidebar"
-import { useState, useEffect } from "react"
+import { PortalShell } from "@/components/layout/portal-shell"
+import { useEffect, useState } from "react"
 import { signOut } from "next-auth/react"
 import { useRouter, usePathname } from "next/navigation"
 
@@ -15,7 +16,6 @@ export function TeacherLayoutClient({ children, teacherName }: TeacherLayoutProp
   const router = useRouter()
   const pathname = usePathname()
 
-  // Determine current view based on pathname
   const getCurrentView = (): "dashboard" | "courses" | "create-course" | "students" | "reports" => {
     if (pathname?.includes("/analytics")) return "students"
     if (pathname?.includes("/reports")) return "reports"
@@ -42,8 +42,7 @@ export function TeacherLayoutClient({ children, teacherName }: TeacherLayoutProp
 
   const handleNavigate = (view: "dashboard" | "courses" | "create-course" | "students" | "reports") => {
     setCurrentView(view)
-    
-    // Navigate to the appropriate route
+
     switch (view) {
       case "dashboard":
         router.push("/teacher")
@@ -63,19 +62,34 @@ export function TeacherLayoutClient({ children, teacherName }: TeacherLayoutProp
     }
   }
 
+  const sidebarProps = {
+    currentView,
+    onNavigate: handleNavigate,
+    onExit: handleExit,
+    teacherName,
+  }
+
   return (
-    <div className="flex h-screen bg-background">
-      <TeacherSidebar
-        currentView={currentView}
-        onNavigate={handleNavigate}
-        onExit={handleExit}
-        teacherName={teacherName}
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
-      <main className="flex-1 overflow-y-auto">
-        {children}
-      </main>
-    </div>
+    <PortalShell
+      portalTitle="Portal Docente"
+      desktopSidebar={
+        <TeacherSidebar
+          {...sidebarProps}
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+      }
+      renderMobileSidebar={(onClose) => (
+        <TeacherSidebar
+          {...sidebarProps}
+          collapsed={false}
+          onToggle={() => {}}
+          isMobile
+          onMobileClose={onClose}
+        />
+      )}
+    >
+      {children}
+    </PortalShell>
   )
 }

@@ -32,7 +32,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="px-8 py-8 max-w-4xl">
+      <div className="px-4 py-6 sm:px-6 md:px-8 md:py-8 max-w-4xl">
         <Button variant="ghost" className="gap-2 mb-6" asChild>
           <Link href="/teacher">
             <ArrowLeft className="h-4 w-4" />
@@ -41,9 +41,9 @@ export default async function CourseDetailPage({ params }: PageProps) {
         </Button>
 
         {/* Header */}
-        <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="flex items-center gap-3 mb-1">
+            <div className="flex flex-wrap items-center gap-3 mb-1">
               <h1 className="font-display text-2xl font-bold text-foreground">{course.title}</h1>
               <Badge variant={course.isPublished ? "default" : "secondary"}>
                 {course.isPublished ? "Publicado" : "Borrador"}
@@ -53,13 +53,13 @@ export default async function CourseDetailPage({ params }: PageProps) {
               <p className="text-muted-foreground">{course.description}</p>
             )}
           </div>
-          <Button variant="outline" asChild>
+          <Button variant="outline" className="shrink-0 self-start" asChild>
             <Link href={`/teacher/courses/${course.id}/edit`}>Editar</Link>
           </Button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6 flex items-center gap-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100">
@@ -90,8 +90,8 @@ export default async function CourseDetailPage({ params }: PageProps) {
             <CardTitle className="text-base">Clave de Inscripción</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-3">
-              <code className="flex-1 rounded-md bg-muted px-4 py-2 font-mono text-lg font-semibold tracking-widest text-center">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <code className="flex-1 rounded-md bg-muted px-4 py-2 font-mono text-base sm:text-lg font-semibold tracking-widest text-center">
                 {course.enrollKey}
               </code>
               <CopyEnrollKey enrollKey={course.enrollKey} />

@@ -133,7 +133,7 @@ export function TopicDetailAdapter({
     : { version: "1.0", blocks: [] };
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
       {/* Progress indicator */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
@@ -224,8 +224,8 @@ export function TopicDetailAdapter({
                 
                 return (
                   <Card key={quiz.id} className={`${hasPassed ? 'border-success/50 bg-success/5' : ''}`}>
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <h3 className="font-semibold">{quiz.title}</h3>
@@ -275,7 +275,7 @@ export function TopicDetailAdapter({
                           )}
                         </div>
                         
-                        <div className="ml-4">
+                        <div className="sm:ml-4 self-start shrink-0">
                           {hasPassed ? (
                             <Button
                               variant="outline"

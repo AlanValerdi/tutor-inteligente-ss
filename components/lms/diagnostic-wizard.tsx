@@ -70,7 +70,7 @@ export function DiagnosticWizard({ onComplete }: DiagnosticWizardProps) {
             </p>
             <div className="mb-8 rounded-xl bg-primary/5 px-8 py-6">
               <p className="mb-1 text-sm font-medium text-muted-foreground">Tu Perfil de Estudio</p>
-              <p className="font-display text-3xl font-bold text-primary">{result}</p>
+              <p className="font-display text-2xl sm:text-3xl font-bold text-primary">{result}</p>
               <p className="mt-2 text-sm text-muted-foreground">
                 {profileDescriptions[result]}
               </p>

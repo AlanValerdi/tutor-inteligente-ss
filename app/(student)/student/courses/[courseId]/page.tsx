@@ -130,7 +130,7 @@ export default async function StudentCoursePage({ params, searchParams }: Course
     <div className="flex flex-col h-full">
       {/* Header with navigation */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
-        <div className="px-8 py-4">
+        <div className="px-4 py-4 sm:px-6 md:px-8">
           <Button variant="ghost" asChild className="gap-2">
             <Link href="/student/courses">
               <ArrowLeft className="h-4 w-4" />

@@ -7,12 +7,12 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <header className="border-b">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <div className="container mx-auto flex h-16 flex-wrap items-center justify-between gap-2 px-4">
           <div className="flex items-center gap-2">
             <GraduationCap className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold">Tutor Inteligente</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             <Link href="/login">
               <Button variant="ghost">Iniciar sesión</Button>
             </Link>

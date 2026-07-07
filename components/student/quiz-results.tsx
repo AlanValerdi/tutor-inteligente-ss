@@ -123,14 +123,14 @@ export function QuizResults({ attempt, quiz, canRetry, courseId, topicId }: Quiz
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Resultados del Cuestionario</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Resultados del Cuestionario</h1>
           <p className="text-muted-foreground">{quiz.title}</p>
         </div>
 
         {/* Score Summary */}
         <Card className="mb-6">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle className="text-2xl">
                   {attempt.passed ? (
@@ -149,8 +149,8 @@ export function QuizResults({ attempt, quiz, canRetry, courseId, topicId }: Quiz
                   Puntuación: {attempt.score}% ({attempt.totalPoints}/{attempt.maxPoints} puntos)
                 </CardDescription>
               </div>
-              <div className="text-right">
-                <div className={`text-5xl font-bold ${attempt.passed ? 'text-green-600' : 'text-red-600'}`}>
+              <div className="text-left sm:text-right">
+                <div className={`text-3xl sm:text-5xl font-bold ${attempt.passed ? 'text-green-600' : 'text-red-600'}`}>
                   {attempt.score}%
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">

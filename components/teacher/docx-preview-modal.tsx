@@ -155,7 +155,7 @@ export function DocxPreviewModal({
           </div>
 
           {/* Settings Grid */}
-          <div className="grid grid-cols-2 gap-4 pb-4 border-b">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b">
             <div>
               <Label htmlFor="passingScore">Puntuación Mínima para Aprobar (%)</Label>
               <Input

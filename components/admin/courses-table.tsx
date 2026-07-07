@@ -50,7 +50,7 @@ export function CoursesTable({ courses }: { courses: Course[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-3 items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -72,7 +72,8 @@ export function CoursesTable({ courses }: { courses: Course[] }) {
         </Select>
       </div>
 
-      <div className="rounded-lg border">
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="rounded-lg border min-w-[640px]">
         <Table>
           <TableHeader>
             <TableRow>
@@ -124,6 +125,7 @@ export function CoursesTable({ courses }: { courses: Course[] }) {
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground">

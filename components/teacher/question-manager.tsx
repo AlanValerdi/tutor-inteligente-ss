@@ -345,7 +345,7 @@ export function QuestionManager({ quiz, questions: initialQuestions }: QuestionM
 
   return (
     <div className="flex-1">
-      <div className="px-8 py-8 overflow-auto h-full">
+      <div className="px-4 py-6 sm:px-6 md:px-8 md:py-8 overflow-auto h-full">
         <div className="max-w-5xl mx-auto">
         <Button
           variant="ghost"
@@ -361,7 +361,7 @@ export function QuestionManager({ quiz, questions: initialQuestions }: QuestionM
         </Button>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             Preguntas: {quiz.title}
           </h1>
           <p className="text-gray-600">
@@ -627,7 +627,7 @@ export function QuestionManager({ quiz, questions: initialQuestions }: QuestionM
               </div>
               {initialQuestions.map((question, index) => (
                 <Card key={question.id} className="hover:border-primary/30 transition-colors">
-                  <CardContent className="px-8 py-8">
+                  <CardContent className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
                     <div className="flex items-start gap-4">
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm">
                         {index + 1}

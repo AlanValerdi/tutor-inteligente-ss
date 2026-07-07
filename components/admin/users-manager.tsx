@@ -104,7 +104,8 @@ export function UsersManager({ initialUsers, currentAdminId }: UsersManagerProps
         <p className="text-sm text-destructive">{error}</p>
       )}
 
-      <div className="rounded-lg border">
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="rounded-lg border min-w-[560px]">
         <Table>
           <TableHeader>
             <TableRow>
@@ -157,6 +158,7 @@ export function UsersManager({ initialUsers, currentAdminId }: UsersManagerProps
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground">

@@ -102,7 +102,7 @@ const totalAvailableTopics = availableTopics.length;
   }
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
       {diagnosticCompleted && (
         <div className="mb-6 rounded-lg bg-success/10 p-4 text-success flex items-start gap-3">
           <CheckCircle2 className="h-5 w-5 mt-0.5" />
@@ -118,7 +118,7 @@ const totalAvailableTopics = availableTopics.length;
             {course.description || "Explora el contenido de este curso y desarrolla nuevas habilidades."}
           </p>
           
-          <div className="flex items-center gap-6 text-sm">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <BookOpen className="h-4 w-4" />
               {availableTopics.length} temas disponibles
@@ -144,7 +144,7 @@ const totalAvailableTopics = availableTopics.length;
         <h2 className="mb-6 font-display text-lg font-semibold text-foreground">Contenido del Curso</h2>
 
         <div className="relative">
-          <div className="absolute left-6 top-0 h-full w-0.5 bg-border" aria-hidden="true" />
+          <div className="absolute left-4 sm:left-6 top-0 h-full w-0.5 bg-border" aria-hidden="true" />
           
           <div className="space-y-4">
             {availableTopics
@@ -157,13 +157,13 @@ const totalAvailableTopics = availableTopics.length;
                 return (
                   <Card
                     key={topic.id}
-                    className={`relative ml-14 cursor-pointer border-0 shadow-sm transition-all hover:shadow-md ${
+                    className={`relative ml-8 sm:ml-14 cursor-pointer border-0 shadow-sm transition-all hover:shadow-md ${
                       isCurrentTopic ? "ring-2 ring-primary ring-offset-2" : ""
                     }`}
                     onClick={() => !isLocked && handleSelectTopic(topic.id)}
                   >
-                    <div className="absolute -left-14 top-1/2 -translate-y-1/2">
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-full border-2 ${
+                    <div className="absolute -left-8 sm:-left-14 top-1/2 -translate-y-1/2">
+                      <div className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 ${
                         isCompleted
                           ? "border-success bg-success text-success-foreground"
                           : isCurrentTopic
@@ -180,8 +180,8 @@ const totalAvailableTopics = availableTopics.length;
                       </div>
                     </div>
                     
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex-1">
                           <h3 className={`font-display font-semibold ${
                             isLocked ? "text-muted-foreground" : "text-foreground"
@@ -204,7 +204,7 @@ const totalAvailableTopics = availableTopics.length;
                         </div>
                         
                         {!isLocked && (
-                          <div className="ml-4">
+                          <div className="sm:ml-4 self-start">
                             <Button size="sm" variant={isCurrentTopic ? "default" : "ghost"}>
                               {isCompleted ? "Revisar" : isCurrentTopic ? "Continuar" : "Comenzar"}
                             </Button>
@@ -227,7 +227,7 @@ const totalAvailableTopics = availableTopics.length;
             <div className="space-y-3">
               {finalQuizzes.map((quiz) => (
                 <Card key={quiz.id} className="border-primary/30 bg-primary/5">
-                  <CardContent className="p-6 flex items-center justify-between gap-4">
+                  <CardContent className="p-4 sm:p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <h3 className="font-semibold text-foreground">{quiz.title}</h3>
                       {quiz.description && (

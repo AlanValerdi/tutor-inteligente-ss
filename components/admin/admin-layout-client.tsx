@@ -1,6 +1,7 @@
 "use client"
 
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
+import { PortalShell } from "@/components/layout/portal-shell"
 import { useState } from "react"
 import { signOut } from "next-auth/react"
 import { useRouter, usePathname } from "next/navigation"
@@ -25,19 +26,34 @@ export function AdminLayoutClient({ children, adminName }: AdminLayoutProps) {
     }
   }
 
+  const sidebarProps = {
+    currentPath: pathname ?? "",
+    onNavigate: (path: string) => router.push(path),
+    onExit: handleExit,
+    adminName,
+  }
+
   return (
-    <div className="flex h-screen bg-background">
-      <AdminSidebar
-        currentPath={pathname}
-        onNavigate={(path) => router.push(path)}
-        onExit={handleExit}
-        adminName={adminName}
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
-      <main className="flex-1 overflow-y-auto">
-        {children}
-      </main>
-    </div>
+    <PortalShell
+      portalTitle="TutorIA Admin"
+      desktopSidebar={
+        <AdminSidebar
+          {...sidebarProps}
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+      }
+      renderMobileSidebar={(onClose) => (
+        <AdminSidebar
+          {...sidebarProps}
+          collapsed={false}
+          onToggle={() => {}}
+          isMobile
+          onMobileClose={onClose}
+        />
+      )}
+    >
+      {children}
+    </PortalShell>
   )
 }

@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 export function DashboardSkeleton() {
   return (
     <div className="flex-1 overflow-auto">
-      <div className="px-8 py-8">
+      <div className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
         {/* Header Skeleton */}
         <div className="mb-8">
           <Skeleton className="h-8 w-64 mb-2" />

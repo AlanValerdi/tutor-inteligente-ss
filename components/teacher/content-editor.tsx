@@ -81,7 +81,7 @@ function SortableBlockItem({
 
   return (
     <div ref={setNodeRef} style={style} className="relative group rounded-lg border bg-card/50 shadow-sm mb-4">
-      <div className="flex items-center justify-between border-b p-2 bg-muted/30">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b p-2 bg-muted/30">
         <div className="flex items-center gap-2">
           <div {...attributes} {...listeners} className="cursor-grab hover:bg-muted p-1 rounded text-muted-foreground">
             <GripVertical className="h-4 w-4" />
@@ -89,8 +89,8 @@ function SortableBlockItem({
           <span className="text-xs font-medium uppercase text-muted-foreground">{block.type}</span>
         </div>
         
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {(['Visual', 'Auditivo', 'Kinestesico'] as StudyProfileType[]).map((profile) => (
               <div key={profile} className="flex items-center space-x-1">
                 <Checkbox

@@ -294,7 +294,7 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
                 </div>
 
                 {/* Settings Grid */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="passingScore">Puntuación Mínima para Aprobar (%)</Label>
                     <Input
@@ -446,7 +446,7 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
                       disabled={isLoading}
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                       <Label>Puntuación Mínima (%)</Label>
                       <Input
@@ -520,7 +520,7 @@ export function CourseQuizManager({ course, initialQuizzes, topics }: CourseQuiz
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                       <div>
                         <p className="text-xs text-muted-foreground">Puntuación Mínima</p>
                         <p className="font-medium">{quiz.passingScore}%</p>

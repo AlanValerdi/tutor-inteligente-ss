@@ -234,7 +234,7 @@ export function StudentAnalyticsData({ students, courses }: StudentAnalyticsData
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="px-8 py-8">
+      <div className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
         <div className="mb-8">
           <h1 className="mb-1 font-display text-2xl font-bold text-foreground">Analitica de Estudiantes</h1>
           <p className="text-muted-foreground">
@@ -559,7 +559,7 @@ export function StudentAnalyticsData({ students, courses }: StudentAnalyticsData
           {anxietyDialogStudent && (
             <div className="mt-2 flex flex-col gap-6">
               {/* Summary cards */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="rounded-lg bg-muted/50 p-3 text-center">
                   <p className="text-xs text-muted-foreground">Prom. Cambios de Pestana</p>
                   <p className="font-display text-lg font-bold text-card-foreground">

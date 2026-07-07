@@ -114,7 +114,7 @@ export default async function AdminReportsPage() {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="px-8 py-8">
+      <div className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
         <div className="mb-8">
           <h1 className="mb-1 font-display text-2xl font-bold text-foreground">Reportes</h1>
           <p className="text-muted-foreground">Analíticas generales de la plataforma</p>
@@ -205,7 +205,8 @@ export default async function AdminReportsPage() {
             <p className="text-sm text-muted-foreground mt-0.5">Solo cursos publicados — top 10 por inscripciones</p>
           </div>
           <div className="px-6 py-4">
-            <div className="rounded-lg border">
+            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="rounded-lg border min-w-[560px]">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -252,6 +253,7 @@ export default async function AdminReportsPage() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             </div>
           </div>
         </div>

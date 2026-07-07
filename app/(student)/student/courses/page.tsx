@@ -43,7 +43,7 @@ export default async function StudentCoursesPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Mis Cursos</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Mis Cursos</h1>
         <p className="text-muted-foreground">
           Gestiona tus cursos inscritos y continúa tu aprendizaje s
         </p>
